@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>بطاقة تهنئة العيد</title>
+  <title>بطاقة تهنئة بمناسبة اليوم الوطني</title>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -41,8 +41,8 @@
 </head>
 <body>
   <div class="container">
-    <h2>كل عام وأنتم بخير 🎉</h2>
-    <p>ادخل اسمك لتحميل بطاقة تهنئة العيد</p>
+    <h2>عزنا بطبعنا</h2>
+    <p>ادخل اسمك لتحميل البطاقة</p>
     <input type="text" id="nameInput" placeholder="اكتب اسمك هنا" />
     <button onclick="generateCard()">إنشاء البطاقة</button>
     <canvas id="greetingCanvas" width="800" height="600"></canvas>
@@ -53,7 +53,7 @@
     const canvas = document.getElementById('greetingCanvas');
     const ctx = canvas.getContext('2d');
 
-    const imageSrc = 'https://i.imgur.com/f9LJx9V.png'; // رابط صورة التهنئة، يمكن تغييره
+    const imageSrc = 'https://j.top4top.io/p_353859ms81.jpeg'; // رابط صورة التهنئة، يمكن تغييره
 
     function generateCard() {
       const name = document.getElementById('nameInput').value.trim();
@@ -85,3 +85,4 @@
   </script>
 </body>
 </html>
+
