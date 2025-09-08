@@ -1,88 +1,425 @@
+
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>بطاقة تهنئة بمناسبة اليوم الوطني</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      text-align: center;
-      background-color: #f8f8f8;
-      padding: 20px;
-    }
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    canvas {
-      display: none;
-      margin-top: 20px;
-    }
-    #downloadBtn {
-      display: none;
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>National Day Card Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            padding: 30px;
+            margin: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #1a2a6c;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subtitle {
+            color: #b21f1f;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+        }
+        
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+        
+        .input-section {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: #1a2a6c;
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            border-color: #1a2a6c;
+            box-shadow: 0 0 0 3px rgba(26, 42, 108, 0.2);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .download-btn {
+            background: linear-gradient(to right, #1a2a6c, #2a4c7d);
+            color: white;
+        }
+        
+        .download-btn:hover {
+            background: linear-gradient(to right, #2a4c7d, #3a6cad);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .download-btn:active {
+            transform: translateY(0);
+        }
+        
+        .card-preview {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        #cardCanvas {
+            width: 100%;
+            display: block;
+            background: #f0f0f0;
+        }
+        
+        .instructions {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .drag-info {
+            background: #fff9e6;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+            font-size: 1rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            button {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h2>عزنا بطبعنا</h2>
-    <p>ادخل اسمك لتحميل البطاقة</p>
-    <input type="text" id="nameInput" placeholder="اكتب اسمك هنا" />
-    <button onclick="generateCard()">إنشاء البطاقة</button>
-    <canvas id="greetingCanvas" width="800" height="600"></canvas>
-    <a id="downloadBtn" download="تهنئة العيد.png">تحميل البطاقة</a>
-  </div>
+    <div class="container">
+        <header>
+            <h1>National Day Card Generator</h1>
+            <p class="subtitle">Create your personalized National Day celebration card</p>
+        </header>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="nameInput">Enter Your Name</label>
+                    <input type="text" id="nameInput" placeholder="Type your name here" oninput="drawCard()">
+                </div>
+                
+                <div class="buttons">
+                    <button class="download-btn" onclick="downloadCard()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download Card
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-preview">
+                <canvas id="cardCanvas"></canvas>
+            </div>
+            
+            
+            
+            <div class="drag-info">
+                <strong>Pro Tip:</strong> You can drag your name to position it anywhere on the card!
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+            </footer>
 
-  <script>
-    const canvas = document.getElementById('greetingCanvas');
-    const ctx = canvas.getContext('2d');
-
-    const imageSrc = 'https://j.top4top.io/p_353859ms81.jpeg'; // رابط صورة التهنئة، يمكن تغييره
-
-    function generateCard() {
-      const name = document.getElementById('nameInput').value.trim();
-      if (!name) {
-        alert('يرجى إدخال الاسم');
-        return;
-      }
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = imageSrc;
-
-      img.onload = function () {
-        canvas.style.display = 'block';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        ctx.font = '40px Arial';
-        ctx.fillStyle = '#000';
-        ctx.textAlign = 'center';
-        ctx.fillText(name, canvas.width / 2, canvas.height - 80);
-
-        const downloadBtn = document.getElementById('downloadBtn');
-        downloadBtn.href = canvas.toDataURL();
-        downloadBtn.style.display = 'block';
-        downloadBtn.innerText = 'تحميل البطاقة باسم ' + name;
-      };
-    }
-  </script>
+    <script>
+        const canvas = document.getElementById('cardCanvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        // Use the image from your GitHub repository
+        img.crossOrigin = "Anonymous";
+        img.src = "put yur github link here";
+        
+        let name = "Your Name";
+        let nameX = 0;
+        let nameY = 0;
+        let dragging = false;
+        let isImageLoaded = false;
+        
+        // Load the image
+        img.onload = () => {
+            isImageLoaded = true;
+            canvas.width = img.width;
+            canvas.height = img.height;
+            nameX = canvas.width / 2;
+            nameY = canvas.height * 0.85;
+            drawCard();
+        };
+        
+        // Handle image loading errors
+        img.onerror = () => {
+            console.error("Error loading image. Using fallback background.");
+            // Create a fallback background
+            isImageLoaded = true;
+            canvas.width = 800;
+            canvas.height = 600;
+            nameX = canvas.width / 2;
+            nameY = canvas.height * 0.85;
+            
+            // Draw a placeholder background
+            ctx.fillStyle = "#1a2a6c";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw gradient overlay
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, 'rgba(178, 31, 31, 0.6)');
+            gradient.addColorStop(1, 'rgba(253, 187, 45, 0.6)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw text
+            ctx.fillStyle = "white";
+            ctx.font = "40px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("National Day Celebration", canvas.width/2, canvas.height/2 - 40);
+            ctx.fillText("Pakistan Zindabad", canvas.width/2, canvas.height/2 + 40);
+            
+            drawCard();
+        };
+        
+        // Draw card with name
+        function drawCard() {
+            if (!isImageLoaded) return;
+            
+            name = document.getElementById('nameInput').value || "Your Name";
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw the background image
+            if (img.src) {
+                ctx.drawImage(img, 0, 0);
+            }
+            
+            // Draw text with stylish appearance
+            ctx.font = "bold 60px 'Arial', sans-serif";
+            ctx.fillStyle = "#ffffff";
+            ctx.strokeStyle = "#1a2a6c";
+            ctx.lineWidth = 4;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            // Draw text with stroke for better visibility
+            ctx.strokeText(name, nameX, nameY);
+            ctx.fillText(name, nameX, nameY);
+        }
+        
+        // Mouse events for dragging
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            
+            // Measure text
+            ctx.font = "bold 60px Arial";
+            const textWidth = ctx.measureText(name).width;
+            const textHeight = 60;
+            
+            // Check if mouse is close to the text
+            if (mouseX > nameX - textWidth/2 && mouseX < nameX + textWidth/2 &&
+                mouseY > nameY - textHeight/2 && mouseY < nameY + textHeight/2) {
+                dragging = true;
+                canvas.style.cursor = 'grabbing';
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (dragging) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                nameX = (e.clientX - rect.left) * scaleX;
+                nameY = (e.clientY - rect.top) * scaleY;
+                drawCard();
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => { 
+            dragging = false; 
+            canvas.style.cursor = 'default';
+        });
+        
+        canvas.addEventListener('mouseleave', () => { 
+            dragging = false; 
+            canvas.style.cursor = 'default';
+        });
+        
+        // Change cursor when hovering over text
+        canvas.addEventListener('mousemove', (e) => {
+            if (dragging) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            
+            // Measure text
+            ctx.font = "bold 60px Arial";
+            const textWidth = ctx.measureText(name).width;
+            const textHeight = 60;
+            
+            // Check if mouse is close to the text
+            if (mouseX > nameX - textWidth/2 && mouseX < nameX + textWidth/2 &&
+                mouseY > nameY - textHeight/2 && mouseY < nameY + textHeight/2) {
+                canvas.style.cursor = 'grab';
+            } else {
+                canvas.style.cursor = 'default';
+            }
+        });
+        
+        // Download function
+        function downloadCard() {
+            if (!isImageLoaded) {
+                alert("Please wait for the image to load");
+                return;
+            }
+            
+            try {
+                // Create a temporary link element
+                const link = document.createElement('a');
+                
+                // Set the download filename
+                const name = document.getElementById('nameInput').value || "NationalDay";
+                const fileName = name.replace(/\s+/g, '_') + '_National_Day_Card.jpg';
+                
+                // Set the href to the canvas data URL
+                link.href = canvas.toDataURL("image/jpeg", 0.9);
+                link.download = fileName;
+                
+                // Trigger the download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error("Download error:", error);
+                alert("Error downloading image. Please try again with a different browser.");
+            }
+        }
+        
+        // Initialize the canvas with proper dimensions even before image loads
+        canvas.width = 800;
+        canvas.height = 600;
+        
+        // Add event listener for the input field
+        document.getElementById('nameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                drawCard();
+            }
+        });
+    </script>
 </body>
 </html>
-
