@@ -2,131 +2,527 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>نموذج تواصل</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multimedia – Social Scheduler (MVP)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#1e3a8a',
+              50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8',
+              500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81'
+            },
+          },
+          boxShadow: {
+            soft: '0 10px 25px rgba(0,0,0,0.06)'
+          },
+          borderRadius: {
+            xl2: '1.25rem'
+          }
+        }
+      }
+    }
+  </script>
+  <!-- React + ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- dayjs for dates -->
+  <script src="https://unpkg.com/dayjs@1/dayjs.min.js"></script>
+  <script src="https://unpkg.com/dayjs@1/plugin/utc.js"></script>
+  <script src="https://unpkg.com/dayjs@1/plugin/timezone.js"></script>
+  <script>
+    dayjs.extend(dayjs_plugin_utc);
+    dayjs.extend(dayjs_plugin_timezone);
+  </script>
   <style>
-    :root { --b:#0f172a; --g:#06b6d4; --bg:#f8fafc; --ok:#22c55e; --err:#ef4444; }
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Naskh Arabic", Tahoma, Arial, sans-serif; background: var(--bg); color: var(--b); margin:0; }
-    .wrap { max-width: 720px; margin: 40px auto; padding: 20px; }
-    .card { background:#fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(2,8,23,.06); padding: 24px; }
-    h1 { margin: 0 0 8px; font-size: 24px; }
-    p.sub { margin: 0 0 24px; color:#475569; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width:640px){ .row { grid-template-columns: 1fr; } }
-    label { display:block; font-weight:600; margin: 12px 0 6px; }
-    input, textarea { width:100%; padding:12px 14px; border:1px solid #e2e8f0; border-radius:10px; font-size:15px; background:#fff; transition: border .15s; }
-    input:focus, textarea:focus { outline:none; border-color: var(--g); }
-    textarea { min-height: 120px; resize: vertical; }
-    .hint { color:#64748b; font-size: 13px; margin-top:6px; }
-    .actions { margin-top: 18px; display:flex; align-items:center; gap: 12px; }
-    button { padding: 12px 18px; border:0; border-radius: 12px; font-weight:700; cursor:pointer; background:var(--g); color:#00313a; }
-    button:disabled { opacity:.6; cursor:not-allowed; }
-    .msg { margin-top:16px; padding:12px 14px; border-radius:12px; display:none; }
-    .msg.ok { background:#ecfdf5; color:#065f46; display:block; }
-    .msg.err { background:#fef2f2; color:#991b1b; display:block; }
-    .note { font-size:12px; color:#64748b; margin-top:10px }
-    .hp { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; } /* honeypot */
+    /* Hide default file input */
+    input[type="file"] { display: none; }
+    .fade-enter { opacity: 0; transform: translateY(6px); }
+    .fade-enter-active { opacity: 1; transform: translateY(0); transition: all .25s ease; }
   </style>
 </head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <h1>طلب تواصل</h1>
-      <p class="sub">عبِّئ بياناتك وسيصلك رد تلقائي على بريدك.</p>
+<body class="bg-slate-50 text-slate-900 selection:bg-primary-500 selection:text-white">
+  <div id="root"></div>
 
-      <form id="contactForm" novalidate>
-        <div class="row">
-          <div>
-            <label for="name">الاسم الكامل</label>
-            <input id="name" name="name" autocomplete="name" required />
-          </div>
-          <div>
-            <label for="company">الشركة (اختياري)</label>
-            <input id="company" name="company" autocomplete="organization" />
-          </div>
-        </div>
+  <script type="text/javascript">
+  ;(() => {
+    const {useState, useEffect, useMemo, useRef} = React;
 
-        <div class="row">
-          <div>
-            <label for="email">البريد الإلكتروني</label>
-            <input id="email" name="email" type="email" autocomplete="email" required />
-            <div class="hint">سوف نرسل الرسالة الجاهزة إلى هذا البريد.</div>
-          </div>
-          <div>
-            <label for="phone">رقم الجوال (اختياري)</label>
-            <input id="phone" name="phone" type="tel" autocomplete="tel" />
-          </div>
-        </div>
+    // --- Helpers: Local Storage ---
+    const LS_KEYS = {
+      POSTS: 'mm_scheduler_posts',
+      ACCOUNTS: 'mm_scheduler_accounts',
+      SETTINGS: 'mm_scheduler_settings'
+    };
+    const loadLS = (k, fallback) => {
+      try { return JSON.parse(localStorage.getItem(k)) ?? fallback } catch { return fallback }
+    }
+    const saveLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-        <label for="message">الطلب / التفاصيل</label>
-        <textarea id="message" name="message" required></textarea>
+    // --- Data Types ---
+    const PLATFORMS = [
+      { key: 'instagram', name: 'Instagram', color: '#E1306C'},
+      { key: 'facebook',  name: 'Facebook',  color: '#1877F2'},
+      { key: 'x',         name: 'X (Twitter)', color: '#111111'},
+      { key: 'linkedin',  name: 'LinkedIn',  color: '#0a66c2'},
+      { key: 'tiktok',    name: 'TikTok',    color: '#000000'},
+    ];
 
-        <!-- حقل honeypot لمكافحة السبام -->
-        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" />
+    // --- Fake OAuth URL hints (replace with your backend routes later) ---
+    const OAUTH_HINTS = {
+      instagram: '/api/oauth/meta/auth',
+      facebook: '/api/oauth/meta/auth',
+      x: '/api/oauth/x/auth',
+      linkedin: '/api/oauth/linkedin/auth',
+      tiktok: '/api/oauth/tiktok/auth',
+    };
 
-        <div class="actions">
-          <button id="submitBtn" type="submit">إرسال</button>
-          <span id="loading" style="display:none">جارٍ الإرسال…</span>
-        </div>
-
-        <div id="ok" class="msg ok">تم استلام طلبك بنجاح، تم إرسال رسالة إلى بريدك. شكرًا لك!</div>
-        <div id="err" class="msg err">حدث خطأ غير متوقع. تأكد من البريد وحاول لاحقًا.</div>
-
-        <div class="note">بالضغط على “إرسال” أنت توافق على مشاركة بياناتك لمعالجة طلبك.</div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    const form = document.getElementById('contactForm');
-    const btn = document.getElementById('submitBtn');
-    const ok = document.getElementById('ok');
-    const err = document.getElementById('err');
-    const loading = document.getElementById('loading');
-
-    function validEmail(email){
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    // --- Toast ---
+    function useToast() {
+      const [toasts, setToasts] = useState([]);
+      function push(msg, type = 'info') {
+        const id = Math.random().toString(36).slice(2);
+        setToasts(t => [...t, {id, msg, type}]);
+        setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000);
+      }
+      return { toasts, push };
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      ok.style.display = 'none';
-      err.style.display = 'none';
+    function Toasts({items}){
+      return (
+        <div className="fixed bottom-4 right-4 space-y-2 z-50">
+          {items.map(t => (
+            <div key={t.id} className={
+              `fade-enter-active px-4 py-2 rounded-xl2 shadow-soft text-white ${
+                t.type==='success' ? 'bg-emerald-600' : t.type==='error' ? 'bg-rose-600' : 'bg-slate-900'
+              }`}>{t.msg}</div>
+          ))}
+        </div>
+      )
+    }
 
-      const data = Object.fromEntries(new FormData(form).entries());
-      if (data.website) { return; } // honeypot
-      if (!data.name || !data.email || !data.message || !validEmail(data.email)) {
-        err.textContent = 'فضلاً عبِّئ الاسم والبريد والتفاصيل بصيغة صحيحة.';
-        err.style.display = 'block';
-        return;
+    // --- Simple Badge ---
+    const Badge = ({children, color="bg-slate-100 text-slate-700"}) => (
+      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${color}`}>{children}</span>
+    );
+
+    // --- Top Nav ---
+    function Nav({tab, setTab}){
+      const tabs = [
+        {id:'compose', label:'إنشاء منشور'},
+        {id:'calendar', label:'التقويم'},
+        {id:'accounts', label:'الحسابات'},
+        {id:'library', label:'مكتبة الوسائط'},
+        {id:'settings', label:'الإعدادات'},
+      ];
+      return (
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-slate-200">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex items-center gap-4 h-16">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl2 bg-primary-600 grid place-items-center text-white font-bold">MM</div>
+                <div>
+                  <h1 className="text-lg font-semibold">Multimedia Scheduler</h1>
+                  <p className="text-xs text-slate-500">MVP واجهة أمامية – جدولة متعددة المنصات</p>
+                </div>
+              </div>
+              <nav className="ms-auto flex items-center gap-1">
+                {tabs.map(t => (
+                  <button key={t.id} onClick={()=>setTab(t.id)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition ${tab===t.id? 'bg-primary-600 text-white' : 'hover:bg-slate-100'}`}>{t.label}</button>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </header>
+      )
+    }
+
+    // --- Media Library (local only) ---
+    function MediaLibrary({media, setMedia}){
+      const fileInputRef = useRef(null);
+      function onSelect(e){
+        const files = Array.from(e.target.files || []);
+        const mapped = files.map(f => ({
+          id: Math.random().toString(36).slice(2),
+          name: f.name, type: f.type, size: f.size,
+          url: URL.createObjectURL(f)
+        }));
+        setMedia(prev => [...mapped, ...prev]);
+      }
+      function remove(id){ setMedia(prev => prev.filter(m => m.id !== id)); }
+      return (
+        <section className="max-w-6xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-2xl shadow-soft p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">مكتبة الوسائط (محلّي)</h2>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white cursor-pointer">
+                  <span>رفع ملفات</span>
+                  <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" onChange={onSelect} />
+                </label>
+                <button onClick={()=>setMedia([])} className="px-3 py-2 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100">تفريغ</button>
+              </div>
+            </div>
+            {media.length === 0 ? (
+              <p className="text-slate-500">لا توجد ملفات مرفوعة بعد. استخدم زر "رفع ملفات".</p>
+            ) : (
+              <ul className="grid md:grid-cols-4 sm:grid-cols-2 gap-4">
+                {media.map(m => (
+                  <li key={m.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                    {m.type.startsWith('image') ? (
+                      <img src={m.url} alt={m.name} className="w-full h-40 object-cover"/>
+                    ) : (
+                      <video src={m.url} controls className="w-full h-40 object-cover"></video>
+                    )}
+                    <div className="p-2 text-xs flex items-center justify-between">
+                      <span className="truncate" title={m.name}>{m.name}</span>
+                      <button onClick={()=>remove(m.id)} className="text-rose-600 hover:underline">حذف</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )
+    }
+
+    // --- Accounts ---
+    function Accounts({accounts, setAccounts, toast}){
+      function connect(platform){
+        const id = Math.random().toString(36).slice(2);
+        const display = prompt(`أدخل اسم العرض للحساب (${platform})\nمثال: Multimedia KSA`);
+        if(!display) return;
+        const acc = { id, platform, display, createdAt: new Date().toISOString(), meta: { note: 'OAuth يتم عبر الباك-إند' } };
+        const next = [...accounts, acc];
+        setAccounts(next); saveLS(LS_KEYS.ACCOUNTS, next);
+        toast.push('تمت إضافة الحساب (Placeholder). وصّل OAuth لاحقاً.', 'success');
+      }
+      function remove(id){
+        if(!confirm('حذف هذا الحساب من الواجهة؟')) return;
+        const next = accounts.filter(a => a.id !== id);
+        setAccounts(next); saveLS(LS_KEYS.ACCOUNTS, next);
+        toast.push('تم حذف الحساب (محلياً).');
+      }
+      return (
+        <section className="max-w-6xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-2xl shadow-soft p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">الحسابات المتصلة</h2>
+              <div className="flex flex-wrap gap-2">
+                {PLATFORMS.map(p => (
+                  <button key={p.key} onClick={()=>connect(p.key)}
+                    className="px-3 py-2 rounded-lg bg-slate-900 text-white hover:opacity-90">
+                    ربط {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {accounts.length === 0 ? (
+              <p className="text-slate-500">لا توجد حسابات بعد. استخدم أزرار "ربط". سيتم استبدال هذه الخطوة بتدفق OAuth عبر الباك-إند.</p>
+            ) : (
+              <ul className="divide-y divide-slate-200">
+                {accounts.map(a => (
+                  <li key={a.id} className="py-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl2" style={{background:a.platform==='instagram'?'#E1306C':a.platform==='facebook'?'#1877F2':a.platform==='linkedin'?'#0a66c2':'#111'}}></div>
+                    <div className="flex-1">
+                      <div className="font-medium">{a.display}</div>
+                      <div className="text-xs text-slate-500">{a.platform} • أضيف {dayjs(a.createdAt).format('YYYY/MM/DD HH:mm')}</div>
+                    </div>
+                    <button onClick={()=>remove(a.id)} className="px-2.5 py-1.5 rounded bg-rose-50 text-rose-700">إزالة</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="mt-4 text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-xl p-3">
+            ملاحظة: عند بناء الباك-إند، استبدل زر "ربط" بإعادة توجيه إلى مسار OAuth مثل: <code>/api/oauth/:platform/auth</code> ثم خزِّن <strong>account_id</strong> و<strong>access_token</strong> في الخادم وليس في المتصفح.
+          </div>
+        </section>
+      )
+    }
+
+    // --- Compose ---
+    function Compose({accounts, mediaLibrary, addPost, toast}){
+      const [text, setText] = useState('');
+      const [selectedMedia, setSelectedMedia] = useState([]); // ids from mediaLibrary
+      const [targets, setTargets] = useState([]); // account ids
+      const [when, setWhen] = useState(() => dayjs().add(1, 'hour').format('YYYY-MM-DDTHH:mm'));
+
+      const totalChars = text.length;
+      const xLimit = 280; // rough
+      const xOver = Math.max(0, totalChars - xLimit);
+
+      function toggleTarget(id){ setTargets(t => t.includes(id) ? t.filter(x=>x!==id) : [...t, id]); }
+      function toggleMedia(id){ setSelectedMedia(s => s.includes(id) ? s.filter(x=>x!==id) : [...s,id]); }
+
+      function schedule(){
+        if(!targets.length){ toast.push('اختر حساب/حسابات للنشر', 'error'); return; }
+        const whenISO = dayjs(when).toISOString();
+        const post = {
+          id: Math.random().toString(36).slice(2),
+          text, 
+          media: selectedMedia.map(id => mediaLibrary.find(m => m.id===id)),
+          targets,
+          scheduledAt: whenISO,
+          status: 'scheduled',
+          createdAt: new Date().toISOString()
+        };
+        addPost(post);
+        setText(''); setSelectedMedia([]);
+        toast.push('تمت جدولة المنشور', 'success');
       }
 
-      btn.disabled = true;
-      loading.style.display = 'inline';
+      return (
+        <section className="max-w-6xl mx-auto px-4 py-6">
+          <div className="grid lg:grid-cols-3 gap-5">
+            <div className="lg:col-span-2 bg-white rounded-2xl shadow-soft p-5">
+              <h2 className="text-lg font-semibold mb-4">محرر المنشور</h2>
+              <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="نص المنشور..."
+                className="w-full min-h-[140px] rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-primary-500" />
 
-      try {
-        const res = await fetch('/api/submit', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify(data)
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <div className={`text-xs ${xOver>0? 'text-rose-600' : 'text-slate-500'}`}>أحرف: {totalChars}{xOver>0 && ` (+${xOver} فوق حد X)`}</div>
+                <Badge>🖼️ وسائط مختارة: {selectedMedia.length}</Badge>
+                <Badge>🎯 حسابات: {targets.length}</Badge>
+                <div className="ms-auto flex items-center gap-2">
+                  <input type="datetime-local" value={when} onChange={e=>setWhen(e.target.value)}
+                         className="rounded-lg border border-slate-300 px-2 py-1"/>
+                  <button onClick={schedule} className="px-4 py-2 rounded-xl2 bg-primary-600 text-white hover:bg-primary-700">جدولة</button>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <h3 className="font-medium mb-2">اختر وسائط من المكتبة</h3>
+                {mediaLibrary.length === 0 ? (
+                  <p className="text-sm text-slate-500">لا توجد وسائط. ارفع من تبويب "مكتبة الوسائط".</p>
+                ) : (
+                  <ul className="grid md:grid-cols-4 sm:grid-cols-2 gap-3">
+                    {mediaLibrary.map(m => (
+                      <li key={m.id} className={`relative border rounded-xl overflow-hidden ${selectedMedia.includes(m.id)?'ring-2 ring-primary-500':''}`}> 
+                        {m.type.startsWith('image') ? (
+                          <img src={m.url} alt={m.name} className="w-full h-32 object-cover"/>
+                        ) : (
+                          <video src={m.url} className="w-full h-32 object-cover"></video>
+                        )}
+                        <label className="absolute top-2 right-2 bg-white/90 rounded-md px-2 py-1 text-xs cursor-pointer shadow" title="اختر">
+                          <input type="checkbox" className="mr-1" checked={selectedMedia.includes(m.id)} onChange={()=>toggleMedia(m.id)} /> وسائط
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <aside className="bg-white rounded-2xl shadow-soft p-5">
+              <h3 className="font-semibold mb-3">اختر الحسابات المستهدفة</h3>
+              {accounts.length===0 ? (
+                <p className="text-sm text-slate-500">لا توجد حسابات. أضف من تبويب "الحسابات".</p>
+              ) : (
+                <ul className="space-y-2">
+                  {accounts.map(a => (
+                    <li key={a.id} className="flex items-center gap-2">
+                      <input id={`acc-${a.id}`} type="checkbox" checked={targets.includes(a.id)} onChange={()=>toggleTarget(a.id)} />
+                      <label htmlFor={`acc-${a.id}`} className="cursor-pointer">{a.display} <span className="text-xs text-slate-500">({a.platform})</span></label>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="mt-6 pt-4 border-t">
+                <h4 className="font-medium mb-2">معاينة سريعة (تقريبية)</h4>
+                <div className="text-xs text-slate-600 space-y-2">
+                  <div className="p-3 rounded-lg bg-slate-50 border">X: {Math.min(totalChars, xLimit)} / {xLimit} {xOver>0 && <span className="text-rose-600">(سيتم قص الزائد)</span>}</div>
+                  <div className="p-3 rounded-lg bg-slate-50 border">Instagram/Facebook/LinkedIn: يدعم نصوص طويلة وصور/فيديو</div>
+                  <div className="p-3 rounded-lg bg-slate-50 border">TikTok: الأفضل فيديو عمودي</div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+      )
+    }
+
+    // --- Calendar & Queue List ---
+    function CalendarView({posts, updatePost, deletePost}){
+      const grouped = useMemo(() => {
+        const by = {};
+        posts.forEach(p => {
+          const d = dayjs(p.scheduledAt).format('YYYY-MM-DD');
+          by[d] = by[d] || []; by[d].push(p);
         });
-        const json = await res.json();
-        if (res.ok) {
-          ok.style.display = 'block';
-          form.reset();
-        } else {
-          err.textContent = json?.error || 'تعذّر الإرسال. حاول لاحقاً.';
-          err.style.display = 'block';
-        }
-      } catch (e) {
-        err.textContent = 'تعذّر الاتصال بالخادم.';
-        err.style.display = 'block';
-      } finally {
-        btn.disabled = false;
-        loading.style.display = 'none';
+        Object.values(by).forEach(arr => arr.sort((a,b)=> new Date(a.scheduledAt)-new Date(b.scheduledAt)));
+        return Object.keys(by).sort().map(k => ({date:k, items:by[k]}));
+      }, [posts]);
+
+      return (
+        <section className="max-w-6xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-2xl shadow-soft p-5">
+            <h2 className="text-lg font-semibold mb-4">التقويم / قائمة المجدول</h2>
+            {grouped.length===0 ? (
+              <p className="text-slate-500">لا توجد منشورات مجدولة.</p>
+            ) : grouped.map(g => (
+              <div key={g.date} className="mb-6">
+                <h3 className="font-medium text-slate-700 mb-2">{dayjs(g.date).format('dddd YYYY/MM/DD')}</h3>
+                <ul className="space-y-3">
+                  {g.items.map(p => (
+                    <li key={p.id} className="border border-slate-200 rounded-xl p-3">
+                      <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+                        <Badge color="bg-emerald-50 text-emerald-700">{p.status}</Badge>
+                        <span>⏰ {dayjs(p.scheduledAt).format('HH:mm')}</span>
+                        <span>🎯 {p.targets.length} حساب</span>
+                        <span>🖼️ {p.media.length} وسائط</span>
+                      </div>
+                      <div className="text-sm whitespace-pre-wrap">{p.text || '— بدون نص —'}</div>
+                      {p.media.length>0 && (
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          {p.media.slice(0,3).map((m,i)=>(
+                            <div key={i} className="aspect-video overflow-hidden rounded-lg border">
+                              {m.type.startsWith('image') ? (
+                                <img src={m.url} alt={m.name} className="w-full h-full object-cover"/>
+                              ) : (
+                                <video src={m.url} className="w-full h-full object-cover"/>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-3 flex items-center gap-2">
+                        <button onClick={()=>{
+                          const when = prompt('تاريخ/وقت جديد (YYYY-MM-DDTHH:mm):', dayjs(p.scheduledAt).format('YYYY-MM-DDTHH:mm'));
+                          if(!when) return;
+                          updatePost({...p, scheduledAt: dayjs(when).toISOString()});
+                        }} className="px-3 py-1.5 rounded bg-slate-900 text-white">تعديل الوقت</button>
+                        <button onClick={()=>deletePost(p.id)} className="px-3 py-1.5 rounded bg-rose-50 text-rose-700">حذف</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    // --- Settings / Export-Import ---
+    function Settings({settings, setSettings, posts, accounts, setPosts, setAccounts, toast}){
+      const fileRef = useRef(null);
+      function save(){ saveLS(LS_KEYS.SETTINGS, settings); toast.push('تم الحفظ', 'success'); }
+      function exportJSON(){
+        const blob = new Blob([JSON.stringify({posts, accounts, settings}, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `scheduler_export_${Date.now()}.json`; a.click();
+        URL.revokeObjectURL(url);
       }
-    });
+      function onImport(e){
+        const f = e.target.files?.[0]; if(!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if(data.posts) { setPosts(data.posts); saveLS(LS_KEYS.POSTS, data.posts); }
+            if(data.accounts) { setAccounts(data.accounts); saveLS(LS_KEYS.ACCOUNTS, data.accounts); }
+            if(data.settings) { setSettings(data.settings); saveLS(LS_KEYS.SETTINGS, data.settings); }
+            toast.push('تم الاستيراد', 'success');
+          } catch(err){ toast.push('فشل الاستيراد: صيغة غير صحيحة', 'error'); }
+        }
+        reader.readAsText(f);
+      }
+      return (
+        <section className="max-w-6xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-2xl shadow-soft p-5 space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold mb-2">إعدادات الواجهة</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <label className="block">
+                  <div className="text-sm text-slate-600 mb-1">المنطقة الزمنية الافتراضية</div>
+                  <input value={settings.tz || ''} onChange={e=>setSettings({...settings, tz:e.target.value})} placeholder="Asia/Riyadh"
+                         className="w-full rounded-lg border border-slate-300 px-3 py-2"/>
+                </label>
+                <label className="block">
+                  <div className="text-sm text-slate-600 mb-1">API Base URL (اختياري)</div>
+                  <input value={settings.api || ''} onChange={e=>setSettings({...settings, api:e.target.value})} placeholder="https://api.yourdomain.com"
+                         className="w-full rounded-lg border border-slate-300 px-3 py-2"/>
+                </label>
+              </div>
+              <div className="mt-3">
+                <button onClick={save} className="px-4 py-2 rounded-xl2 bg-primary-600 text-white">حفظ</button>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="font-medium mb-2">نسخ احتياطي</h3>
+              <div className="flex items-center gap-2">
+                <button onClick={exportJSON} className="px-3 py-2 rounded-lg bg-slate-900 text-white">تصدير JSON</button>
+                <label className="px-3 py-2 rounded-lg bg-slate-100 cursor-pointer">استيراد JSON
+                  <input ref={fileRef} type="file" accept="application/json" onChange={onImport} />
+                </label>
+                <button onClick={()=>{ if(confirm('مسح كل البيانات المحلية؟')){ setPosts([]); setAccounts([]); saveLS(LS_KEYS.POSTS, []); saveLS(LS_KEYS.ACCOUNTS, []); } }}
+                        className="px-3 py-2 rounded-lg bg-rose-50 text-rose-700">تفريغ محلي</button>
+              </div>
+            </div>
+
+            <div className="text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-xl p-3">
+              للتكامل الحقيقي: اربط هذه الواجهة بباك-إند يقوم بـOAuth وتخزين التوكنات وجدولة المهام ونشرها عبر Workers. هذه الصفحة لا تخزّن أي أسرار؛ كل ما هنا محلي في المتصفح (LocalStorage).
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    // --- App Root ---
+    function App(){
+      const [tab, setTab] = useState('compose');
+      const [posts, setPosts] = useState(() => loadLS(LS_KEYS.POSTS, []));
+      const [accounts, setAccounts] = useState(() => loadLS(LS_KEYS.ACCOUNTS, []));
+      const [media, setMedia] = useState([]);
+      const [settings, setSettings] = useState(() => loadLS(LS_KEYS.SETTINGS, { tz: 'Asia/Riyadh', api: '' }));
+      const toast = useToast();
+
+      useEffect(()=>{ saveLS(LS_KEYS.POSTS, posts); }, [posts]);
+
+      function addPost(p){ setPosts(prev => [...prev, p]); }
+      function updatePost(p){ setPosts(prev => prev.map(x => x.id===p.id ? p : x)); }
+      function deletePost(id){ setPosts(prev => prev.filter(x => x.id!==id)); }
+
+      // Simulated background publisher (client-only): marks posts as "published" when time passes
+      useEffect(()=>{
+        const t = setInterval(() => {
+          setPosts(prev => prev.map(p => {
+            if(p.status==='scheduled' && dayjs().isAfter(dayjs(p.scheduledAt))) {
+              return { ...p, status: 'published', publishedAt: new Date().toISOString() };
+            }
+            return p;
+          }));
+        }, 15000);
+        return () => clearInterval(t);
+      }, []);
+
+      return (
+        <div>
+          <Nav tab={tab} setTab={setTab} />
+          {tab==='compose' && <Compose accounts={accounts} mediaLibrary={media} addPost={addPost} toast={toast} />}
+          {tab==='calendar' && <CalendarView posts={posts} updatePost={updatePost} deletePost={deletePost} />}
+          {tab==='accounts' && <Accounts accounts={accounts} setAccounts={setAccounts} toast={toast} />}
+          {tab==='library' && <MediaLibrary media={media} setMedia={setMedia} />}
+          {tab==='settings' && <Settings settings={settings} setSettings={setSettings} posts={posts} accounts={accounts} setPosts={setPosts} setAccounts={setAccounts} toast={toast} />}
+          <Toasts items={toast.toasts} />
+          <footer className="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-slate-500">© {new Date().getFullYear()} Multimedia. واجهة MVP للاستخدام الداخلي – جدولة محليّة. اربطها بالباك-إند لاحقاً.</footer>
+        </div>
+      );
+    }
+
+    // Mount
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+  })();
   </script>
 </body>
 </html>
-
