@@ -28,12 +28,12 @@
     }
   </script>
   <!-- React + ReactDOM CDN -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <!-- dayjs for dates -->
-  <script src="https://unpkg.com/dayjs@1/dayjs.min.js"></script>
-  <script src="https://unpkg.com/dayjs@1/plugin/utc.js"></script>
-  <script src="https://unpkg.com/dayjs@1/plugin/timezone.js"></script>
+  <script defer src="https://unpkg.com/dayjs@1/dayjs.min.js"></script>
+  <script defer src="https://unpkg.com/dayjs@1/plugin/utc.js"></script>
+  <script defer src="https://unpkg.com/dayjs@1/plugin/timezone.js"></script>
   <script>
     dayjs.extend(dayjs_plugin_utc);
     dayjs.extend(dayjs_plugin_timezone);
@@ -49,6 +49,16 @@
   <div id="root"></div>
 
   <script type="text/javascript">
+  // basic runtime error surface to avoid blank screen
+  window.addEventListener('error', function(e){
+    const el = document.getElementById('boot-error') || (function(){
+      const b = document.createElement('div');
+      b.id = 'boot-error';
+      b.style.cssText = 'position:fixed;left:1rem;right:1rem;bottom:1rem;background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;padding:.75rem 1rem;border-radius:.75rem;font:12px system-ui, -apple-system, Segoe UI, Roboto; z-index:99999;';
+      document.body.appendChild(b); return b; })();
+    el.textContent = 'Runtime error: ' + (e.error && e.error.message ? e.error.message : e.message);
+  });
+
   ;(() => {
     const {useState, useEffect, useMemo, useRef} = React;
 
@@ -520,8 +530,17 @@
     }
 
     // Mount
+    try {
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(React.createElement(App));
+  } catch(err){
+    const el = document.getElementById('boot-error') || (function(){
+      const b = document.createElement('div');
+      b.id = 'boot-error';
+      b.style.cssText = 'position:fixed;left:1rem;right:1rem;bottom:1rem;background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;padding:.75rem 1rem;border-radius:.75rem;font:12px system-ui, -apple-system, Segoe UI, Roboto; z-index:99999;';
+      document.body.appendChild(b); return b; })();
+    el.textContent = 'Mount error: ' + err.message;
+  }
   })();
   </script>
 </body>
