@@ -1,553 +1,915 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Multimedia – Social Scheduler (MVP)</title>
-
-  <!-- Tailwind CSS (CDN) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SubSouq | متجر الاشتراكات الرقمية</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Tailwind Config -->
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
-          colors: {
-            primary: {
-              DEFAULT: '#1e3a8a',
-              50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8',
-              500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81'
-            },
+          fontFamily: {
+            sans: ['Tajawal', 'sans-serif'],
           },
-          boxShadow: { soft: '0 10px 25px rgba(0,0,0,0.06)' },
-          borderRadius: { xl2: '1.25rem' }
+          colors: {
+            gold: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+            },
+            dark: {
+              900: '#0a0a0a',
+              800: '#171717',
+              700: '#262626',
+            }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-in-out',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          }
         }
       }
     }
   </script>
 
-  <!-- React + ReactDOM (Production UMD) -->
-  <script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-  <!-- dayjs -->
-  <script defer src="https://unpkg.com/dayjs@1/dayjs.min.js"></script>
-  <script defer src="https://unpkg.com/dayjs@1/plugin/utc.js"></script>
-  <script defer src="https://unpkg.com/dayjs@1/plugin/timezone.js"></script>
-
   <style>
-    input[type="file"] { display: none; }
-    .fade-enter-active { transition: all .25s ease; }
+    body {
+      background-color: #0a0a0a;
+      color: #e5e5e5;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
   </style>
-</head>
-<body class="bg-slate-50 text-slate-900 selection:bg-primary-500 selection:text-white">
-  <noscript>
-    <div style="margin:16px;padding:12px;border:1px solid #fecaca;background:#fee2e2;color:#7f1d1d;border-radius:10px;">
-      تحتاج لتفعيل JavaScript لعرض التطبيق.
-    </div>
-  </noscript>
 
+  <!-- Import Map for React & Dependencies -->
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.292.0",
+    "@google/genai": "https://esm.sh/@google/genai@0.1.2",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+  }
+}
+</script>
+</head>
+<body>
   <div id="root"></div>
 
-  <script>
-    // تجهيز dayjs
-    window.addEventListener('DOMContentLoaded', function () {
+  <!-- Application Logic -->
+  <script type="text/babel" data-type="module">
+    import React, { useState, useEffect } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { 
+      ShoppingBag, Menu, X, Sparkles, Globe, 
+      ArrowLeft, ArrowRight, Plus, Trash2, 
+      Check, ShieldCheck, Clock, Zap, ShoppingCart, 
+      Loader2, Send 
+    } from 'lucide-react';
+    import { GoogleGenAI } from '@google/genai';
+
+    // --- MOCK PROCESS.ENV FOR BROWSER ---
+    window.process = {
+      env: {
+        // REPLACE WITH YOUR ACTUAL API KEY OR LEAVE AS IS IF INJECTED EXTERNALLY
+        API_KEY: "" 
+      }
+    };
+
+    // --- TYPES & CONSTANTS ---
+    const APP_NAME = "DigitalSouq";
+    const CURRENCY = { ar: "ر.س", en: "SAR" };
+
+    const Category = {
+      ALL: 'all',
+      ENTERTAINMENT: 'entertainment',
+      GAMING: 'gaming',
+      SECURITY_APPS: 'security_apps'
+    };
+
+    const SubCategory = {
+      NONE: 'none',
+      NETFLIX: 'netflix',
+      SHAHID: 'shahid',
+      IPTV: 'iptv',
+      MUSIC: 'music',
+      MOBILE_GAME: 'mobile_game',
+      PC_GAME: 'pc_game',
+      CONSOLE: 'console',
+      AI_TOOLS: 'ai_tools',
+      VPN: 'vpn',
+      DESIGN: 'design'
+    };
+
+    const TRANSLATIONS = {
+      home: { ar: 'الرئيسية', en: 'Home' },
+      store: { ar: 'المتجر', en: 'Store' },
+      about: { ar: 'عن المتجر', en: 'About' },
+      aiAssistant: { ar: 'المساعد الذكي', en: 'AI Concierge' },
+      cart: { ar: 'السلة', en: 'Cart' },
+      heroTitle: { ar: 'ارتقِ بتجربتك الرقمية', en: 'Elevate Your Digital Experience' },
+      heroSubtitle: { ar: 'متجر الاشتراكات الأول', en: 'Premium Subscriptions Store' },
+      heroDesc: { 
+        ar: 'نقدم لك أفضل الاشتراكات العالمية بأرخص الأسعار. نتفليكس، شاهد، برامج التصميم والذكاء الاصطناعي بين يديك في ثوانٍ.',
+        en: 'We offer the best global subscriptions at the lowest prices. Netflix, Shahid, Design tools, and AI software in your hands in seconds.'
+      },
+      browseProducts: { ar: 'تصفح المنتجات', en: 'Browse Products' },
+      todayDeals: { ar: 'عروض اليوم', en: 'Today\'s Deals' },
+      addToCart: { ar: 'أضف للسلة', en: 'Add to Cart' },
+      category_all: { ar: 'الكل', en: 'All' },
+      category_entertainment: { ar: 'ترفيه', en: 'Entertainment' },
+      category_gaming: { ar: 'ألعاب', en: 'Gaming' },
+      category_security_apps: { ar: 'حماية وتطبيقات', en: 'Apps & Security' },
+      checkout: { ar: 'إتمام الشراء', en: 'Checkout' },
+      total: { ar: 'الإجمالي', en: 'Total' },
+      emptyCart: { ar: 'السلة فارغة', en: 'Your cart is empty' },
+      continueShopping: { ar: 'متابعة التسوق', en: 'Continue Shopping' },
+      viewCart: { ar: 'عرض السلة', en: 'View Cart' },
+      productDetails: { ar: 'تفاصيل المنتج', en: 'Product Details' },
+      features: { ar: 'المميزات', en: 'Features' },
+      relatedProducts: { ar: 'منتجات مشابهة', en: 'Related Products' },
+      backToStore: { ar: 'العودة للمتجر', en: 'Back to Store' },
+      sub_mobile_game: { ar: 'شحن ألعاب جوال', en: 'Mobile Top-up' },
+      sub_pc_game: { ar: 'ألعاب كمبيوتر', en: 'PC Games' },
+      sub_console: { ar: 'أجهزة كونسول', en: 'Console' },
+      sub_iptv: { ar: 'IPTV', en: 'IPTV' },
+      sub_shahid: { ar: 'شاهد', en: 'Shahid' },
+      sub_netflix: { ar: 'نتفليكس', en: 'Netflix' },
+      sub_music: { ar: 'موسيقى', en: 'Music' },
+      sub_ai_tools: { ar: 'ذكاء اصطناعي', en: 'AI Tools' },
+      sub_vpn: { ar: 'VPN', en: 'VPN' },
+      sub_design: { ar: 'تصميم', en: 'Design' }
+    };
+
+    const PRODUCTS = [
+      {
+        id: 'nf-4k-1m',
+        name: 'Netflix Premium (4K)',
+        nameEn: 'Netflix Premium (4K)',
+        description: 'استمتع بأفلام ومسلسلات غير محدودة بدقة 4K Ultra HD. حساب خاص ملف شخصي واحد.',
+        descriptionEn: 'Enjoy unlimited movies and TV shows in 4K Ultra HD. Private profile.',
+        price: 25,
+        originalPrice: 45,
+        category: Category.ENTERTAINMENT,
+        subCategory: SubCategory.NETFLIX,
+        image: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=800&auto=format&fit=crop',
+        features: ['دقة 4K UHD', 'بدون إعلانات', 'يعمل على التلفزيون والجوال'],
+        featuresEn: ['4K UHD Quality', 'No Ads', 'Works on TV & Mobile'],
+        duration: '1 شهر',
+        durationEn: '1 Month'
+      },
+      {
+        id: 'shahid-vip',
+        name: 'شاهد VIP + رياضة',
+        nameEn: 'Shahid VIP + Sports',
+        description: 'أضخم مكتبة للمحتوى العربي + دوري روشن السعودي مباشر.',
+        descriptionEn: 'Largest Arabic content library + Saudi Roshn League live.',
+        price: 35,
+        originalPrice: 59,
+        category: Category.ENTERTAINMENT,
+        subCategory: SubCategory.SHAHID,
+        image: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?q=80&w=800&auto=format&fit=crop',
+        features: ['بث مباشر للمباريات', 'أعمال شاهد الأصلية', 'جودة FHD'],
+        featuresEn: ['Live Matches', 'Shahid Originals', 'FHD Quality'],
+        duration: '1 شهر',
+        durationEn: '1 Month'
+      },
+      {
+        id: 'iptv-gold',
+        name: 'IPTV Gold Server',
+        nameEn: 'IPTV Gold Server',
+        description: 'أكثر من 10,000 قناة عالمية وعربية مشفرة ومفتوحة بجودة عالية.',
+        descriptionEn: 'Over 10,000 global and Arabic channels, encrypted and open in high quality.',
+        price: 99,
+        originalPrice: 150,
+        category: Category.ENTERTAINMENT,
+        subCategory: SubCategory.IPTV,
+        image: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?q=80&w=800&auto=format&fit=crop',
+        features: ['+10000 قناة', 'مكتبة أفلام 4K', 'بدون تقطيع'],
+        featuresEn: ['+10000 Channels', '4K Movie Library', 'Anti-Freeze'],
+        duration: '1 سنة',
+        durationEn: '1 Year'
+      },
+      {
+        id: 'chatgpt-plus',
+        name: 'ChatGPT Plus Shared',
+        nameEn: 'ChatGPT Plus Shared',
+        description: 'وصول مشترك لنموذج GPT-4 القوي مع ميزات التحليل والرسم.',
+        descriptionEn: 'Shared access to powerful GPT-4 model with analysis and image generation.',
+        price: 40,
+        originalPrice: 80,
+        category: Category.SECURITY_APPS,
+        subCategory: SubCategory.AI_TOOLS,
+        image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=800&auto=format&fit=crop',
+        features: ['GPT-4 Access', 'DALL-E 3', 'تحليل البيانات'],
+        featuresEn: ['GPT-4 Access', 'DALL-E 3', 'Data Analysis'],
+        duration: '1 شهر',
+        durationEn: '1 Month'
+      },
+      {
+        id: 'midjourney-std',
+        name: 'Midjourney Standard',
+        nameEn: 'Midjourney Standard',
+        description: 'أطلق العنان لإبداعك وقم بتوليد صور احترافية بالذكاء الاصطناعي.',
+        descriptionEn: 'Unleash your creativity and generate professional AI images.',
+        price: 120,
+        originalPrice: 200,
+        category: Category.SECURITY_APPS,
+        subCategory: SubCategory.AI_TOOLS,
+        image: 'https://images.unsplash.com/photo-1686191128892-3b37813f4151?q=80&w=800&auto=format&fit=crop',
+        features: ['توليد صور سريع', 'استخدام تجاري', 'سيرفر خاص'],
+        featuresEn: ['Fast Generation', 'Commercial Use', 'Private Server'],
+        duration: '1 شهر',
+        durationEn: '1 Month'
+      },
+      {
+        id: 'nord-vpn',
+        name: 'NordVPN Premium',
+        nameEn: 'NordVPN Premium',
+        description: 'تصفح الإنترنت بأمان وخصوصية تامة. تجاوز الحجب الجغرافي بسهولة.',
+        descriptionEn: 'Browse the internet securely and privately. Bypass geo-restrictions easily.',
+        price: 15,
+        originalPrice: 30,
+        category: Category.SECURITY_APPS,
+        subCategory: SubCategory.VPN,
+        image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?q=80&w=800&auto=format&fit=crop',
+        features: ['6 أجهزة متزامنة', 'IP ثابت', 'حماية من الفيروسات'],
+        featuresEn: ['6 Simultaneous Devices', 'Static IP', 'Virus Protection'],
+        duration: '1 شهر',
+        durationEn: '1 Month'
+      },
+      {
+        id: 'pubg-uc-660',
+        name: 'PUBG Mobile 660 UC',
+        nameEn: 'PUBG Mobile 660 UC',
+        description: 'شحن فوري لشدات ببجي موبايل عن طريق الآيدي.',
+        descriptionEn: 'Instant PUBG Mobile UC top-up via ID.',
+        price: 38,
+        originalPrice: 42,
+        category: Category.GAMING,
+        subCategory: SubCategory.MOBILE_GAME,
+        image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop',
+        features: ['شحن فوري', 'آمن ورسمي', 'يدعم جميع المناطق'],
+        featuresEn: ['Instant Delivery', 'Safe & Official', 'Global Support'],
+        duration: 'دائم',
+        durationEn: 'Lifetime'
+      },
+      {
+        id: 'freefire-gems',
+        name: 'Free Fire 1000 Diamonds',
+        nameEn: 'Free Fire 1000 Diamonds',
+        description: 'اشحن جواهر فري فاير واحصل على سكنات حصرية.',
+        descriptionEn: 'Top up Free Fire diamonds and get exclusive skins.',
+        price: 35,
+        originalPrice: 40,
+        category: Category.GAMING,
+        subCategory: SubCategory.MOBILE_GAME,
+        image: 'https://images.unsplash.com/photo-1610056637555-5264b3017cb8?q=80&w=800&auto=format&fit=crop',
+        features: ['شحن عبر المعرف', 'بونوس إضافي', 'تسليم سريع'],
+        featuresEn: ['ID Top-up', 'Extra Bonus', 'Fast Delivery'],
+        duration: 'دائم',
+        durationEn: 'Lifetime'
+      },
+      {
+        id: 'steam-card-50',
+        name: 'Steam Wallet $50',
+        nameEn: 'Steam Wallet $50',
+        description: 'بطاقة ستيم بقيمة 50 دولار لشراء ألعاب الكمبيوتر.',
+        descriptionEn: '$50 Steam Wallet card for PC games.',
+        price: 195,
+        originalPrice: 200,
+        category: Category.GAMING,
+        subCategory: SubCategory.PC_GAME,
+        image: 'https://images.unsplash.com/photo-1629239851602-5369650228d7?q=80&w=800&auto=format&fit=crop',
+        features: ['كود رقمي', 'جميع الريجونات', 'تفعيل فوري'],
+        featuresEn: ['Digital Code', 'Global Region', 'Instant Activation'],
+        duration: 'دائم',
+        durationEn: 'Lifetime'
+      },
+      {
+        id: 'xbox-pass',
+        name: 'Xbox Game Pass Ultimate',
+        nameEn: 'Xbox Game Pass Ultimate',
+        description: 'مئات الألعاب عالية الجودة للكونسول والكمبيوتر الشخصي.',
+        descriptionEn: 'Hundreds of high-quality games for console and PC.',
+        price: 45,
+        originalPrice: 70,
+        category: Category.GAMING,
+        subCategory: SubCategory.CONSOLE,
+        image: 'https://images.unsplash.com/photo-1605901309584-818e25960b8f?q=80&w=800&auto=format&fit=crop',
+        features: ['EA Play', 'Cloud Gaming', 'ألعاب اليوم الأول'],
+        featuresEn: ['EA Play', 'Cloud Gaming', 'Day One Games'],
+        duration: '1 شهر',
+        durationEn: '1 Month'
+      }
+    ];
+
+    // --- SERVICES ---
+    const getRecommendations = async (userQuery) => {
+      const apiKey = window.process.env.API_KEY || "";
+      if (!apiKey) {
+        console.error("API Key missing");
+        return [];
+      }
+
       try {
-        dayjs.extend(window.dayjs_plugin_utc);
-        dayjs.extend(window.dayjs_plugin_timezone);
-      } catch (e) {
-        // عادي لو ما اشتغلت الإضافات، التطبيق يكمل
-      }
-    });
+        const ai = new GoogleGenAI({ apiKey });
+        
+        const productContext = PRODUCTS.map(p => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          desc: p.description
+        }));
 
-    // سطح أخطاء بسيط بدل الشاشة البيضاء
-    window.addEventListener('error', function(e){
-      const el = document.getElementById('boot-error') || (() => {
-        const b = document.createElement('div');
-        b.id = 'boot-error';
-        b.style.cssText = 'position:fixed;left:1rem;right:1rem;bottom:1rem;background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;padding:.75rem 1rem;border-radius:.75rem;font:12px system-ui,-apple-system,Segoe UI,Roboto;z-index:99999;';
-        document.body.appendChild(b); return b;
-      })();
-      el.textContent = 'Runtime error: ' + (e.error && e.error.message ? e.error.message : e.message);
-    });
-  </script>
+        const prompt = `
+          You are an expert sales assistant for a digital subscription store.
+          User Query: "${userQuery}"
+          
+          Available Products:
+          ${JSON.stringify(productContext)}
+          
+          Based on the user's query, recommend up to 3 most relevant products.
+          Return the response in strictly JSON format.
+          The output should be an array of objects with 'productId' and 'reason' (in Arabic).
+        `;
 
-  <!-- التطبيق -->
-  <script defer>
-    ;(() => {
-      const {useState, useEffect, useMemo, useRef} = React;
-
-      // مفاتيح التخزين المحلي
-      const LS_KEYS = {
-        POSTS: 'mm_scheduler_posts',
-        ACCOUNTS: 'mm_scheduler_accounts',
-        SETTINGS: 'mm_scheduler_settings'
-      };
-      const loadLS = (k, fallback) => { try { return JSON.parse(localStorage.getItem(k)) ?? fallback } catch { return fallback } }
-      const saveLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-
-      // المنصات
-      const PLATFORMS = [
-        { key: 'instagram', name: 'Instagram', color: '#E1306C'},
-        { key: 'facebook',  name: 'Facebook',  color: '#1877F2'},
-        { key: 'x',         name: 'X (Twitter)', color: '#111111'},
-        { key: 'linkedin',  name: 'LinkedIn',  color: '#0a66c2'},
-        { key: 'tiktok',    name: 'TikTok',    color: '#000000'},
-      ];
-
-      // Toasts
-      function useToast() {
-        const [toasts, setToasts] = useState([]);
-        function push(msg, type = 'info') {
-          const id = Math.random().toString(36).slice(2);
-          setToasts(t => [...t, {id, msg, type}]);
-          setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000);
-        }
-        return { toasts, push };
-      }
-      function Toasts({items}){
-        return (
-          React.createElement('div', {className:'fixed bottom-4 right-4 space-y-2 z-50'},
-            items.map(t =>
-              React.createElement('div', {
-                key: t.id,
-                className: `fade-enter-active px-4 py-2 rounded-xl2 shadow-soft text-white ${
-                  t.type==='success' ? 'bg-emerald-600' : t.type==='error' ? 'bg-rose-600' : 'bg-slate-900'
-                }`
-              }, t.msg)
-            )
-          )
-        )
-      }
-
-      const Badge = ({children, color="bg-slate-100 text-slate-700"}) =>
-        React.createElement('span', {className:`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${color}`}, children);
-
-      function Nav({tab, setTab}){
-        const tabs = [
-          {id:'compose', label:'إنشاء منشور'},
-          {id:'calendar', label:'التقويم'},
-          {id:'accounts', label:'الحسابات'},
-          {id:'library', label:'مكتبة الوسائط'},
-          {id:'settings', label:'الإعدادات'},
-        ];
-        return (
-          React.createElement('header', {className:'sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-slate-200'},
-            React.createElement('div', {className:'max-w-6xl mx-auto px-4'},
-              React.createElement('div', {className:'flex items-center gap-4 h-16'},
-                React.createElement('div', {className:'flex items-center gap-3'},
-                  React.createElement('div', {className:'w-9 h-9 rounded-xl2 bg-primary-600 grid place-items-center text-white font-bold'}, 'MM'),
-                  React.createElement('div', null,
-                    React.createElement('h1', {className:'text-lg font-semibold'}, 'Multimedia Scheduler'),
-                    React.createElement('p', {className:'text-xs text-slate-500'}, 'MVP واجهة أمامية – جدولة متعددة المنصات')
-                  )
-                ),
-                React.createElement('nav', {className:'ms-auto flex items-center gap-1'},
-                  tabs.map(t => React.createElement('button', {
-                    key:t.id,
-                    onClick:()=>setTab(t.id),
-                    className:`px-3 py-2 rounded-lg text-sm font-medium transition ${tab===t.id? 'bg-primary-600 text-white' : 'hover:bg-slate-100'}`
-                  }, t.label))
-                )
-              )
-            )
-          )
-        )
-      }
-
-      function MediaLibrary({media, setMedia}){
-        const fileInputRef = useRef(null);
-        function onSelect(e){
-          const files = Array.from(e.target.files || []);
-          const mapped = files.map(f => ({
-            id: Math.random().toString(36).slice(2),
-            name: f.name, type: f.type, size: f.size,
-            url: URL.createObjectURL(f)
-          }));
-          setMedia(prev => [...mapped, ...prev]);
-        }
-        function remove(id){ setMedia(prev => prev.filter(m => m.id !== id)); }
-        return (
-          React.createElement('section', {className:'max-w-6xl mx-auto px-4 py-6'},
-            React.createElement('div', {className:'bg-white rounded-2xl shadow-soft p-5'},
-              React.createElement('div', {className:'flex items-center justify-between mb-4'},
-                React.createElement('h2', {className:'text-lg font-semibold'}, 'مكتبة الوسائط (محلّي)'),
-                React.createElement('div', {className:'flex items-center gap-2'},
-                  React.createElement('label', {className:'inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white cursor-pointer'},
-                    React.createElement('span', null, 'رفع ملفات'),
-                    React.createElement('input', {ref:fileInputRef, type:'file', multiple:true, accept:'image/*,video/*', onChange:onSelect})
-                  ),
-                  React.createElement('button', {onClick:()=>setMedia([]), className:'px-3 py-2 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100'}, 'تفريغ')
-                )
-              ),
-              media.length === 0
-                ? React.createElement('p', {className:'text-slate-500'}, 'لا توجد ملفات مرفوعة بعد. استخدم زر "رفع ملفات".')
-                : React.createElement('ul', {className:'grid md:grid-cols-4 sm:grid-cols-2 gap-4'},
-                    media.map(m => React.createElement('li', {key:m.id, className:'border border-slate-200 rounded-xl overflow-hidden'},
-                      m.type.startsWith('image')
-                        ? React.createElement('img', {src:m.url, alt:m.name, className:'w-full h-40 object-cover'})
-                        : React.createElement('video', {src:m.url, controls:true, className:'w-full h-40 object-cover'}),
-                      React.createElement('div', {className:'p-2 text-xs flex items-center justify-between'},
-                        React.createElement('span', {className:'truncate', title:m.name}, m.name),
-                        React.createElement('button', {onClick:()=>remove(m.id), className:'text-rose-600 hover:underline'}, 'حذف')
-                      )
-                    ))
-                  )
-            )
-          )
-        )
-      }
-
-      function Accounts({accounts, setAccounts, toast}){
-        function connect(platform){
-          const id = Math.random().toString(36).slice(2);
-          const display = prompt(`أدخل اسم العرض للحساب (${platform})\nمثال: Multimedia KSA`);
-          if(!display) return;
-          const acc = { id, platform, display, createdAt: new Date().toISOString(), meta: { note: 'OAuth يتم عبر الباك-إند' } };
-          const next = [...accounts, acc];
-          setAccounts(next); saveLS(LS_KEYS.ACCOUNTS, next);
-          toast.push('تمت إضافة الحساب (Placeholder). وصّل OAuth لاحقاً.', 'success');
-        }
-        function remove(id){
-          if(!confirm('حذف هذا الحساب من الواجهة؟')) return;
-          const next = accounts.filter(a => a.id !== id);
-          setAccounts(next); saveLS(LS_KEYS.ACCOUNTS, next);
-          toast.push('تم حذف الحساب (محلياً).');
-        }
-        return (
-          React.createElement('section', {className:'max-w-6xl mx-auto px-4 py-6'},
-            React.createElement('div', {className:'bg-white rounded-2xl shadow-soft p-5'},
-              React.createElement('div', {className:'flex items-center justify-between mb-4'},
-                React.createElement('h2', {className:'text-lg font-semibold'}, 'الحسابات المتصلة'),
-                React.createElement('div', {className:'flex flex-wrap gap-2'},
-                  PLATFORMS.map(p => React.createElement('button', {
-                    key:p.key, onClick:()=>connect(p.key),
-                    className:'px-3 py-2 rounded-lg bg-slate-900 text-white hover:opacity-90'
-                  }, `ربط ${p.name}`))
-                )
-              ),
-              accounts.length === 0
-                ? React.createElement('p', {className:'text-slate-500'}, 'لا توجد حسابات بعد. استخدم أزرار "ربط". سيتم استبدال هذه الخطوة بتدفق OAuth عبر الباك-إند.')
-                : React.createElement('ul', {className:'divide-y divide-slate-200'},
-                    accounts.map(a =>
-                      React.createElement('li', {key:a.id, className:'py-3 flex items-center gap-3'},
-                        React.createElement('div', {
-                          className:'w-9 h-9 rounded-xl2',
-                          style:`background:${a.platform==='instagram'?'#E1306C':a.platform==='facebook'?'#1877F2':a.platform==='linkedin'?'#0a66c2':'#111'}`
-                        }),
-                        React.createElement('div', {className:'flex-1'},
-                          React.createElement('div', {className:'font-medium'}, a.display),
-                          React.createElement('div', {className:'text-xs text-slate-500'}, `${a.platform} • أضيف ${dayjs(a.createdAt).format('YYYY/MM/DD HH:mm')}`)
-                        ),
-                        React.createElement('button', {onClick:()=>remove(a.id), className:'px-2.5 py-1.5 rounded bg-rose-50 text-rose-700'}, 'إزالة')
-                      )
-                    )
-                  )
-            ),
-            React.createElement('div', {className:'mt-4 text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-xl p-3'},
-              'ملاحظة: عند بناء الباك-إند، استبدل زر "ربط" بإعادة توجيه إلى مسار OAuth مثل: ',
-              React.createElement('code', null, '/api/oauth/:platform/auth'),
-              ' ثم خزِّن account_id و access_token في الخادم.'
-            )
-          )
-        )
-      }
-
-      function Compose({accounts, mediaLibrary, addPost, toast}){
-        const [text, setText] = useState('');
-        const [selectedMedia, setSelectedMedia] = useState([]);
-        const [targets, setTargets] = useState([]);
-        const [when, setWhen] = useState(() => (window.dayjs||dayjs)().add(1,'hour').format('YYYY-MM-DDTHH:mm'));
-
-        const totalChars = text.length;
-        const xLimit = 280;
-        const xOver = Math.max(0, totalChars - xLimit);
-
-        function toggleTarget(id){ setTargets(t => t.includes(id) ? t.filter(x=>x!==id) : [...t, id]); }
-        function toggleMedia(id){ setSelectedMedia(s => s.includes(id) ? s.filter(x=>x!==id) : [...s,id]); }
-
-        function schedule(){
-          if(!targets.length){ toast.push('اختر حساب/حسابات للنشر', 'error'); return; }
-          const whenISO = (window.dayjs||dayjs)(when).toISOString();
-          const post = {
-            id: Math.random().toString(36).slice(2),
-            text,
-            media: selectedMedia.map(id => mediaLibrary.find(m => m.id===id)).filter(Boolean),
-            targets,
-            scheduledAt: whenISO,
-            status: 'scheduled',
-            createdAt: new Date().toISOString()
-          };
-          addPost(post);
-          setText(''); setSelectedMedia([]);
-          toast.push('تمت جدولة المنشور', 'success');
-        }
-
-        return (
-          React.createElement('section', {className:'max-w-6xl mx-auto px-4 py-6'},
-            React.createElement('div', {className:'grid lg:grid-cols-3 gap-5'},
-              React.createElement('div', {className:'lg:col-span-2 bg-white rounded-2xl shadow-soft p-5'},
-                React.createElement('h2', {className:'text-lg font-semibold mb-4'}, 'محرر المنشور'),
-                React.createElement('textarea', {
-                  value:text, onChange:e=>setText(e.target.value), placeholder:'نص المنشور...',
-                  className:'w-full min-h-[140px] rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-primary-500'
-                }),
-                React.createElement('div', {className:'flex flex-wrap items-center gap-2 mt-3'},
-                  React.createElement('div', {className:`text-xs ${xOver>0? 'text-rose-600' : 'text-slate-500'}`},
-                    `أحرف: ${totalChars}${xOver>0 ? ` (+${xOver} فوق حد X)` : ''}`
-                  ),
-                  React.createElement(Badge, null, `🖼️ وسائط مختارة: ${selectedMedia.length}`),
-                  React.createElement(Badge, null, `🎯 حسابات: ${targets.length}`),
-                  React.createElement('div', {className:'ms-auto flex items-center gap-2'},
-                    React.createElement('input', {type:'datetime-local', value:when, onChange:e=>setWhen(e.target.value),
-                      className:'rounded-lg border border-slate-300 px-2 py-1'}),
-                    React.createElement('button', {onClick:schedule, className:'px-4 py-2 rounded-xl2 bg-primary-600 text-white hover:bg-primary-700'}, 'جدولة')
-                  )
-                ),
-                React.createElement('div', {className:'mt-5'},
-                  React.createElement('h3', {className:'font-medium mb-2'}, 'اختر وسائط من المكتبة'),
-                  mediaLibrary.length === 0
-                    ? React.createElement('p', {className:'text-sm text-slate-500'}, 'لا توجد وسائط. ارفع من تبويب "مكتبة الوسائط".')
-                    : React.createElement('ul', {className:'grid md:grid-cols-4 sm:grid-cols-2 gap-3'},
-                        mediaLibrary.map(m =>
-                          React.createElement('li', {key:m.id, className:`relative border rounded-xl overflow-hidden ${selectedMedia.includes(m.id)?'ring-2 ring-primary-500':''}`},
-                            m.type.startsWith('image')
-                              ? React.createElement('img', {src:m.url, alt:m.name, className:'w-full h-32 object-cover'})
-                              : React.createElement('video', {src:m.url, className:'w-full h-32 object-cover'}),
-                            React.createElement('label', {className:'absolute top-2 right-2 bg-white/90 rounded-md px-2 py-1 text-xs cursor-pointer shadow', title:'اختر'},
-                              React.createElement('input', {type:'checkbox', className:'mr-1', checked:selectedMedia.includes(m.id), onChange:()=>toggleMedia(m.id)}),
-                              ' وسائط'
-                            )
-                          )
-                        )
-                      )
-                )
-              ),
-              React.createElement('aside', {className:'bg-white rounded-2xl shadow-soft p-5'},
-                React.createElement('h3', {className:'font-semibold mb-3'}, 'اختر الحسابات المستهدفة'),
-                accounts.length===0
-                  ? React.createElement('p', {className:'text-sm text-slate-500'}, 'لا توجد حسابات. أضف من تبويب "الحسابات".')
-                  : React.createElement('ul', {className:'space-y-2'},
-                      accounts.map(a =>
-                        React.createElement('li', {key:a.id, className:'flex items-center gap-2'},
-                          React.createElement('input', {id:`acc-${a.id}`, type:'checkbox', checked:targets.includes(a.id), onChange:()=>toggleTarget(a.id)}),
-                          React.createElement('label', {htmlFor:`acc-${a.id}`, className:'cursor-pointer'},
-                            `${a.display} `,
-                            React.createElement('span', {className:'text-xs text-slate-500'}, `(${a.platform})`)
-                          )
-                        )
-                      )
-                    ),
-                React.createElement('div', {className:'mt-6 pt-4 border-t'},
-                  React.createElement('h4', {className:'font-medium mb-2'}, 'معاينة سريعة (تقريبية)'),
-                  React.createElement('div', {className:'text-xs text-slate-600 space-y-2'},
-                    React.createElement('div', {className:'p-3 rounded-lg bg-slate-50 border'}, `X: ${Math.min(totalChars, xLimit)} / ${xLimit} ${xOver>0? '(سيتم قص الزائد)' : ''}`),
-                    React.createElement('div', {className:'p-3 rounded-lg bg-slate-50 border'}, 'Instagram/Facebook/LinkedIn: يدعم نصوص طويلة وصور/فيديو'),
-                    React.createElement('div', {className:'p-3 rounded-lg bg-slate-50 border'}, 'TikTok: الأفضل فيديو عمودي')
-                  )
-                )
-              )
-            )
-          )
-        )
-      }
-
-      function CalendarView({posts, updatePost, deletePost}){
-        const grouped = useMemo(() => {
-          const by = {};
-          posts.forEach(p => {
-            const d = dayjs(p.scheduledAt).format('YYYY-MM-DD');
-            by[d] = by[d] || []; by[d].push(p);
-          });
-          Object.values(by).forEach(arr => arr.sort((a,b)=> new Date(a.scheduledAt)-new Date(b.scheduledAt)));
-          return Object.keys(by).sort().map(k => ({date:k, items:by[k]}));
-        }, [posts]);
-
-        return (
-          React.createElement('section', {className:'max-w-6xl mx-auto px-4 py-6'},
-            React.createElement('div', {className:'bg-white rounded-2xl shadow-soft p-5'},
-              React.createElement('h2', {className:'text-lg font-semibold mb-4'}, 'التقويم / قائمة المجدول'),
-              grouped.length===0
-                ? React.createElement('p', {className:'text-slate-500'}, 'لا توجد منشورات مجدولة.')
-                : grouped.map(g =>
-                    React.createElement('div', {key:g.date, className:'mb-6'},
-                      React.createElement('h3', {className:'font-medium text-slate-700 mb-2'}, dayjs(g.date).format('dddd YYYY/MM/DD')),
-                      React.createElement('ul', {className:'space-y-3'},
-                        g.items.map(p =>
-                          React.createElement('li', {key:p.id, className:'border border-slate-200 rounded-xl p-3'},
-                            React.createElement('div', {className:'flex items-center gap-2 text-sm text-slate-600 mb-2'},
-                              React.createElement(Badge, {color:'bg-emerald-50 text-emerald-700'}, p.status),
-                              React.createElement('span', null, '⏰ ' + dayjs(p.scheduledAt).format('HH:mm')),
-                              React.createElement('span', null, '🎯 ' + p.targets.length + ' حساب'),
-                              React.createElement('span', null, '🖼️ ' + p.media.length + ' وسائط')
-                            ),
-                            React.createElement('div', {className:'text-sm whitespace-pre-wrap'}, p.text || '— بدون نص —'),
-                            p.media.length>0 && React.createElement('div', {className:'mt-2 grid grid-cols-3 gap-2'},
-                              p.media.slice(0,3).map((m,i)=>
-                                React.createElement('div', {key:i, className:'aspect-video overflow-hidden rounded-lg border'},
-                                  m.type.startsWith('image')
-                                    ? React.createElement('img', {src:m.url, alt:m.name, className:'w-full h-full object-cover'})
-                                    : React.createElement('video', {src:m.url, className:'w-full h-full object-cover'})
-                                )
-                              )
-                            ),
-                            React.createElement('div', {className:'mt-3 flex items-center gap-2'},
-                              React.createElement('button', {onClick:()=>{
-                                const when = prompt('تاريخ/وقت جديد (YYYY-MM-DDTHH:mm):', dayjs(p.scheduledAt).format('YYYY-MM-DDTHH:mm'));
-                                if(!when) return;
-                                updatePost({...p, scheduledAt: dayjs(when).toISOString()});
-                              }, className:'px-3 py-1.5 rounded bg-slate-900 text-white'}, 'تعديل الوقت'),
-                              React.createElement('button', {onClick:()=>deletePost(p.id), className:'px-3 py-1.5 rounded bg-rose-50 text-rose-700'}, 'حذف')
-                            )
-                          )
-                        )
-                      )
-                    )
-                  )
-            )
-          )
-        )
-      }
-
-      function Settings({settings, setSettings, posts, accounts, setPosts, setAccounts, toast}){
-        const fileRef = useRef(null);
-        function save(){ saveLS(LS_KEYS.SETTINGS, settings); toast.push('تم الحفظ', 'success'); }
-        function exportJSON(){
-          const blob = new Blob([JSON.stringify({posts, accounts, settings}, null, 2)], {type:'application/json'});
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = `scheduler_export_${Date.now()}.json`; a.click();
-          URL.revokeObjectURL(url);
-        }
-        function onImport(e){
-          const f = e.target.files?.[0]; if(!f) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              const data = JSON.parse(reader.result);
-              if(data.posts) { setPosts(data.posts); saveLS(LS_KEYS.POSTS, data.posts); }
-              if(data.accounts) { setAccounts(data.accounts); saveLS(LS_KEYS.ACCOUNTS, data.accounts); }
-              if(data.settings) { setSettings(data.settings); saveLS(LS_KEYS.SETTINGS, data.settings); }
-              toast.push('تم الاستيراد', 'success');
-            } catch(err){ toast.push('فشل الاستيراد: صيغة غير صحيحة', 'error'); }
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            // Note: Schema definition skipped in JS for simplicity, relying on prompt
           }
-          reader.readAsText(f);
-        }
+        });
+
+        const jsonText = response.text;
+        if (!jsonText) return [];
+
+        return JSON.parse(jsonText);
+      } catch (error) {
+        console.error("Gemini AI Error:", error);
+        return [];
+      }
+    };
+
+    // --- COMPONENTS ---
+
+    const Header = ({ cartCount, onOpenCart, onOpenAI, onNavigateHome, language, setLanguage }) => {
+      const [scrolled, setScrolled] = useState(false);
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+      
+      const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][language] : key;
+
+      useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      const toggleLanguage = () => setLanguage(language === 'ar' ? 'en' : 'ar');
+
+      return (
+        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent ${
+          scrolled ? 'bg-dark-900/90 backdrop-blur-md border-white/10 py-4' : 'bg-transparent py-6'
+        }`}>
+          <div className="container mx-auto px-6 flex justify-between items-center">
+            <div onClick={onNavigateHome} className="text-2xl font-bold tracking-tighter flex items-center gap-2 cursor-pointer">
+              <span className="text-white">DIGITAL</span>
+              <span className="text-amber-500">SOUQ</span>
+            </div>
+
+            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+              <button onClick={onNavigateHome} className="hover:text-white transition-colors">{t('home')}</button>
+              <button onClick={onNavigateHome} className="hover:text-white transition-colors">{t('store')}</button>
+              <button onClick={onOpenAI} className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-500 text-black px-4 py-2 rounded-full hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all font-bold">
+                <Sparkles size={16} />
+                <span>{t('aiAssistant')}</span>
+              </button>
+            </nav>
+
+            <div className="flex items-center gap-4">
+              <button onClick={toggleLanguage} className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors text-sm font-bold uppercase">
+                <Globe size={18} />
+                {language === 'ar' ? 'EN' : 'عربي'}
+              </button>
+
+              <button onClick={onOpenCart} className="relative p-2 text-white hover:text-amber-500 transition-colors">
+                <ShoppingBag size={24} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+              
+              <button className="md:hidden text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                {mobileMenuOpen ? <X /> : <Menu />}
+              </button>
+            </div>
+          </div>
+
+          {mobileMenuOpen && (
+            <div className="md:hidden absolute top-full left-0 right-0 bg-dark-900 border-b border-white/10 p-6 flex flex-col gap-4 animate-fade-in shadow-2xl">
+              <button className="text-gray-300 hover:text-amber-500 text-right" onClick={() => { onNavigateHome(); setMobileMenuOpen(false); }}>{t('home')}</button>
+              <button className="text-gray-300 hover:text-amber-500 text-right" onClick={() => { onNavigateHome(); setMobileMenuOpen(false); }}>{t('store')}</button>
+              <button onClick={() => { onOpenAI(); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-amber-500 font-bold">
+                <Sparkles size={16} />
+                {t('aiAssistant')}
+              </button>
+            </div>
+          )}
+        </header>
+      );
+    };
+
+    const Hero = ({ language }) => {
+      const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][language] : key;
+      const Arrow = language === 'ar' ? ArrowLeft : ArrowRight;
+
+      return (
+        <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2670&auto=format&fit=crop" alt="Digital Abstract" className="w-full h-full object-cover opacity-40" />
+            <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/50 to-transparent" />
+            <div className={`absolute inset-0 ${language === 'ar' ? 'bg-gradient-to-r' : 'bg-gradient-to-l'} from-dark-900/90 via-dark-900/40 to-transparent`} />
+          </div>
+
+          <div className="container mx-auto px-6 relative z-10 text-center md:text-start pt-20">
+            <div className={`flex flex-col ${language === 'ar' ? 'md:items-start' : 'md:items-start'} items-center`}>
+              <span className="inline-block py-1 px-3 border border-amber-500/30 rounded-full text-amber-400 text-xs tracking-widest mb-6 uppercase">
+                {t('heroSubtitle')}
+              </span>
+              <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+                {language === 'ar' ? (
+                  <>ارتقِ بتجربتك <br /><span className="text-transparent bg-clip-text bg-gradient-to-l from-amber-200 to-amber-600">الرقمية الآن</span></>
+                ) : (
+                  <>Elevate Your <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-600">Digital Life</span></>
+                )}
+              </h1>
+              <p className="text-gray-400 text-lg max-w-xl mb-10 leading-relaxed">{t('heroDesc')}</p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                <a href="#products" className="group bg-white text-black px-8 py-4 rounded-sm font-bold flex items-center justify-center gap-2 hover:bg-amber-400 transition-all duration-300">
+                  {t('browseProducts')}
+                  <Arrow className={`transition-transform ${language === 'ar' ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+                </a>
+                <button className="px-8 py-4 border border-white/20 text-white rounded-sm hover:bg-white/5 transition-all">
+                  {t('todayDeals')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const ProductCard = ({ product, onAddToCart, onProductClick, language }) => {
+      const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][language] : key;
+      const currency = CURRENCY[language] || (language === 'ar' ? 'ر.س' : 'SAR');
+      
+      const name = language === 'ar' ? product.name : product.nameEn;
+      const description = language === 'ar' ? product.description : product.descriptionEn;
+      const features = language === 'ar' ? product.features : product.featuresEn;
+      const duration = language === 'ar' ? product.duration : product.durationEn;
+
+      return (
+        <div onClick={() => onProductClick(product)} className="group relative bg-dark-800 border border-white/5 overflow-hidden transition-all duration-500 hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-900/10 cursor-pointer flex flex-col h-full">
+          <div className="relative aspect-[4/3] overflow-hidden">
+            <img src={product.image} alt={name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100" />
+            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-white/10 z-10">
+              {t(`category_${product.category}`)}
+            </div>
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
+               <button onClick={(e) => { e.stopPropagation(); onAddToCart(product); }} className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300 bg-amber-500 text-black px-6 py-3 font-bold rounded-full flex items-center gap-2 hover:bg-white">
+                 <Plus size={18} /> {t('addToCart')}
+               </button>
+            </div>
+          </div>
+          <div className="p-6 flex flex-col flex-1">
+            <div className="mb-2"><h3 className="text-xl font-bold text-white group-hover:text-amber-500 transition-colors">{name}</h3></div>
+            <p className="text-gray-400 text-sm mb-4 line-clamp-2 h-10 leading-relaxed">{description}</p>
+            <div className="flex flex-wrap gap-2 mb-6">
+              {features.slice(0, 2).map((feat, idx) => <span key={idx} className="text-[10px] bg-white/5 text-gray-300 px-2 py-1 rounded">{feat}</span>)}
+            </div>
+            <div className="mt-auto flex items-center justify-between border-t border-white/5 pt-4">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 line-through">{product.originalPrice} {currency}</span>
+                <span className="text-lg font-bold text-white">{product.price} <span className="text-sm font-normal text-amber-500">{currency}</span></span>
+              </div>
+              <span className="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded">{duration}</span>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const ProductDetails = ({ product, language, onAddToCart, onBack, onProductClick }) => {
+      const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][language] : key;
+      const currency = CURRENCY[language] || (language === 'ar' ? 'ر.س' : 'SAR');
+      const Arrow = language === 'ar' ? ArrowRight : ArrowLeft;
+
+      const name = language === 'ar' ? product.name : product.nameEn;
+      const description = language === 'ar' ? product.description : product.descriptionEn;
+      const features = language === 'ar' ? product.features : product.featuresEn;
+      const duration = language === 'ar' ? product.duration : product.durationEn;
+
+      const relatedProducts = PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3);
+
+      return (
+        <div className="min-h-screen pt-24 pb-20 animate-fade-in">
+          <div className="container mx-auto px-6">
+            <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-amber-500 mb-8 transition-colors group">
+              <Arrow size={20} className={`transition-transform ${language === 'ar' ? 'group-hover:translate-x-1' : 'group-hover:-translate-x-1'}`} />
+              <span>{t('backToStore')}</span>
+            </button>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+              <div className="relative">
+                <div className="aspect-square rounded-2xl overflow-hidden border border-white/10 shadow-2xl relative">
+                   <img src={product.image} alt={name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+                </div>
+                <div className="grid grid-cols-3 gap-4 mt-6">
+                   <div className="bg-dark-800 p-4 rounded-xl border border-white/5 flex flex-col items-center text-center"><ShieldCheck className="text-green-500 mb-2" /><span className="text-xs text-gray-400">Secure Payment</span></div>
+                   <div className="bg-dark-800 p-4 rounded-xl border border-white/5 flex flex-col items-center text-center"><Zap className="text-amber-500 mb-2" /><span className="text-xs text-gray-400">Instant Delivery</span></div>
+                   <div className="bg-dark-800 p-4 rounded-xl border border-white/5 flex flex-col items-center text-center"><Clock className="text-blue-500 mb-2" /><span className="text-xs text-gray-400">24/7 Support</span></div>
+                </div>
+              </div>
+
+              <div>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{name}</h1>
+                <div className="flex items-center gap-4 mb-8">
+                  <span className="text-3xl font-bold text-amber-500">{product.price} {currency}</span>
+                  <span className="text-xl text-gray-500 line-through decoration-red-500/50">{product.originalPrice} {currency}</span>
+                  <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-bold">{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF</span>
+                </div>
+                <p className="text-gray-300 text-lg leading-relaxed mb-8 border-l-4 border-amber-500 pl-4 rtl:border-l-0 rtl:border-r-4 rtl:pl-0 rtl:pr-4 bg-white/5 p-4 rounded-r rtl:rounded-l rtl:rounded-r-none">{description}</p>
+                <div className="mb-10">
+                  <h3 className="text-white font-bold text-xl mb-4 flex items-center gap-2"><span className="w-1 h-6 bg-amber-500 rounded-full"></span>{t('features')}</h3>
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-gray-300">
+                        <div className="bg-amber-500/20 p-1 rounded-full mt-1"><Check size={14} className="text-amber-500" /></div>{feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex gap-4">
+                  <button onClick={() => onAddToCart(product)} className="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 text-lg transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)]">
+                    <ShoppingBag />{t('addToCart')}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {relatedProducts.length > 0 && (
+              <div className="border-t border-white/10 pt-16">
+                <h2 className="text-2xl font-bold text-white mb-8">{t('relatedProducts')}</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {relatedProducts.map(p => (
+                    <div key={p.id} onClick={() => onProductClick(p)} className="bg-dark-800 border border-white/5 rounded-xl overflow-hidden hover:border-amber-500/30 transition-all cursor-pointer group">
+                      <div className="aspect-video relative overflow-hidden">
+                        <img src={p.image} alt={language === 'ar' ? p.name : p.nameEn} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      </div>
+                      <div className="p-4">
+                        <h4 className="text-white font-bold truncate">{language === 'ar' ? p.name : p.nameEn}</h4>
+                        <div className="flex justify-between items-center mt-2">
+                           <span className="text-amber-500">{p.price} {currency}</span>
+                           <span className="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded">{t('viewCart')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const CartView = ({ items, onRemove, onUpdateQty, language, onContinueShopping }) => {
+      const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][language] : key;
+      const currency = CURRENCY[language] || (language === 'ar' ? 'ر.س' : 'SAR');
+      const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const CheckoutArrow = language === 'ar' ? ArrowLeft : ArrowRight;
+
+      if (items.length === 0) {
         return (
-          React.createElement('section', {className:'max-w-6xl mx-auto px-4 py-6'},
-            React.createElement('div', {className:'bg-white rounded-2xl shadow-soft p-5 space-y-6'},
-              React.createElement('div', null,
-                React.createElement('h2', {className:'text-lg font-semibold mb-2'}, 'إعدادات الواجهة'),
-                React.createElement('div', {className:'grid sm:grid-cols-2 gap-4'},
-                  React.createElement('label', {className:'block'},
-                    React.createElement('div', {className:'text-sm text-slate-600 mb-1'}, 'المنطقة الزمنية الافتراضية'),
-                    React.createElement('input', {
-                      value: settings.tz || '',
-                      onChange: e=>setSettings({...settings, tz:e.target.value}),
-                      placeholder:'Asia/Riyadh', className:'w-full rounded-lg border border-slate-300 px-3 py-2'
-                    })
-                  ),
-                  React.createElement('label', {className:'block'},
-                    React.createElement('div', {className:'text-sm text-slate-600 mb-1'}, 'API Base URL (اختياري)'),
-                    React.createElement('input', {
-                      value: settings.api || '',
-                      onChange: e=>setSettings({...settings, api:e.target.value}),
-                      placeholder:'https://api.yourdomain.com', className:'w-full rounded-lg border border-slate-300 px-3 py-2'
-                    })
-                  ),
-                ),
-                React.createElement('div', {className:'mt-3'},
-                  React.createElement('button', {onClick:save, className:'px-4 py-2 rounded-xl2 bg-primary-600 text-white'}, 'حفظ')
-                )
-              ),
-              React.createElement('div', {className:'border-t pt-4'},
-                React.createElement('h3', {className:'font-medium mb-2'}, 'نسخ احتياطي'),
-                React.createElement('div', {className:'flex items-center gap-2'},
-                  React.createElement('button', {onClick:exportJSON, className:'px-3 py-2 rounded-lg bg-slate-900 text-white'}, 'تصدير JSON'),
-                  React.createElement('label', {className:'px-3 py-2 rounded-lg bg-slate-100 cursor-pointer'}, 'استيراد JSON',
-                    React.createElement('input', {ref:fileRef, type:'file', accept:'application/json', onChange:onImport})
-                  ),
-                  React.createElement('button', {onClick:()=>{
-                    if(confirm('مسح كل البيانات المحلية؟')){
-                      setPosts([]); setAccounts([]);
-                      saveLS(LS_KEYS.POSTS, []); saveLS(LS_KEYS.ACCOUNTS, []);
-                    }
-                  }, className:'px-3 py-2 rounded-lg bg-rose-50 text-rose-700'}, 'تفريغ محلي')
-                )
-              ),
-              React.createElement('div', {className:'text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-xl p-3'},
-                'للتكامل الحقيقي: اربط هذه الواجهة بباك-إند يقوم بـOAuth وتخزين التوكنات وجدولة المهام ونشرها عبر Workers. الواجهة حالياً محلية (LocalStorage).'
-              )
-            )
-          )
-        )
+          <div className="min-h-[70vh] flex flex-col items-center justify-center pt-20 animate-fade-in">
+            <div className="bg-dark-800 p-8 rounded-full mb-6 relative"><ShoppingCart size={64} className="text-gray-600" /><div className="absolute top-0 right-0 w-4 h-4 bg-amber-500 rounded-full animate-ping"></div></div>
+            <h2 className="text-2xl font-bold text-white mb-2">{t('emptyCart')}</h2>
+            <button onClick={onContinueShopping} className="bg-amber-500 text-black px-8 py-3 rounded-full font-bold hover:bg-amber-400 transition-colors mt-6">{t('continueShopping')}</button>
+          </div>
+        );
       }
 
-      function App(){
-        const [tab, setTab] = useState('compose');
-        const [posts, setPosts] = useState(() => loadLS(LS_KEYS.POSTS, []));
-        const [accounts, setAccounts] = useState(() => loadLS(LS_KEYS.ACCOUNTS, []));
-        const [media, setMedia] = useState([]);
-        const [settings, setSettings] = useState(() => loadLS(LS_KEYS.SETTINGS, { tz: 'Asia/Riyadh', api: '' }));
-        const toast = useToast();
+      return (
+        <div className="min-h-screen pt-32 pb-20 animate-fade-in">
+          <div className="container mx-auto px-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-10 border-b border-white/10 pb-6">{t('cart')} <span className="text-lg font-normal text-gray-500">({items.length} items)</span></h1>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <div className="lg:col-span-2 space-y-6">
+                {items.map(item => {
+                  const name = language === 'ar' ? item.name : item.nameEn;
+                  const features = language === 'ar' ? item.features : item.featuresEn;
+                  return (
+                    <div key={item.id} className="bg-dark-800 border border-white/5 rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row gap-6 items-center hover:border-white/10 transition-colors">
+                      <img src={item.image} alt={name} className="w-full sm:w-32 h-32 object-cover rounded-lg" />
+                      <div className="flex-1 text-center sm:text-start w-full">
+                        <h3 className="text-xl font-bold text-white mb-1">{name}</h3>
+                        <p className="text-sm text-gray-400 mb-4">{features[0]}</p>
+                        <div className="flex items-center justify-center sm:justify-start gap-4">
+                          <div className="flex items-center bg-dark-900 rounded-lg border border-white/10">
+                            <button onClick={() => onUpdateQty(item.id, -1)} className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-colors">-</button>
+                            <span className="w-10 text-center font-mono text-white">{item.quantity}</span>
+                            <button onClick={() => onUpdateQty(item.id, 1)} className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition-colors">+</button>
+                          </div>
+                          <button onClick={() => onRemove(item.id)} className="text-red-500/70 hover:text-red-500 p-2 transition-colors"><Trash2 size={20} /></button>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-2xl font-bold text-amber-500">{item.price * item.quantity} {currency}</span>
+                        <span className="text-xs text-gray-500">{item.price} {currency} / unit</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="lg:col-span-1">
+                <div className="bg-dark-800 border border-white/5 rounded-xl p-8 sticky top-32">
+                  <h3 className="text-xl font-bold text-white mb-6">{t('total')}</h3>
+                  <div className="space-y-4 mb-8">
+                    <div className="flex justify-between text-gray-400"><span>Subtotal</span><span>{total} {currency}</span></div>
+                    <div className="border-t border-white/10 pt-4 flex justify-between text-white font-bold text-xl"><span>Total</span><span className="text-amber-500">{total} {currency}</span></div>
+                  </div>
+                  <button className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-amber-500/20"><span>{t('checkout')}</span><CheckoutArrow size={20} /></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
 
-        useEffect(()=>{ saveLS(LS_KEYS.POSTS, posts); }, [posts]);
+    const AIAssistantModal = ({ isOpen, onClose, onAddToCart }) => {
+      const [query, setQuery] = useState('');
+      const [isLoading, setIsLoading] = useState(false);
+      const [recommendations, setRecommendations] = useState([]);
+      const [hasSearched, setHasSearched] = useState(false);
 
-        function addPost(p){ setPosts(prev => [...prev, p]); }
-        function updatePost(p){ setPosts(prev => prev.map(x => x.id===p.id ? p : x)); }
-        function deletePost(id){ setPosts(prev => prev.filter(x => x.id!==id)); }
+      const handleSearch = async (e) => {
+        e.preventDefault();
+        if (!query.trim()) return;
+        setIsLoading(true);
+        setHasSearched(true);
+        const results = await getRecommendations(query);
+        setRecommendations(results);
+        setIsLoading(false);
+      };
 
-        // مُحاكي نشر محلي
-        useEffect(()=>{
-          const t = setInterval(() => {
-            setPosts(prev => prev.map(p => {
-              if(p.status==='scheduled' && dayjs().isAfter(dayjs(p.scheduledAt))) {
-                return { ...p, status: 'published', publishedAt: new Date().toISOString() };
-              }
-              return p;
-            }));
-          }, 15000);
-          return () => clearInterval(t);
-        }, []);
+      const getProductDetails = (id) => PRODUCTS.find(p => p.id === id);
 
-        return (
-          React.createElement('div', null,
-            React.createElement(Nav, {tab, setTab}),
-            tab==='compose' && React.createElement(Compose, {accounts, mediaLibrary:media, addPost, toast}),
-            tab==='calendar' && React.createElement(CalendarView, {posts, updatePost, deletePost}),
-            tab==='accounts' && React.createElement(Accounts, {accounts, setAccounts, toast}),
-            tab==='library' && React.createElement(MediaLibrary, {media, setMedia}),
-            tab==='settings' && React.createElement(Settings, {settings, setSettings, posts, accounts, setPosts, setAccounts, toast}),
-            React.createElement(Toasts, {items:toast.toasts}),
-            React.createElement('footer', {className:'max-w-6xl mx-auto px-4 py-8 text-center text-xs text-slate-500'},
-              `© ${new Date().getFullYear()} Multimedia. واجهة MVP للاستخدام الداخلي – جدولة محليّة. اربطها بالباك-إند لاحقاً.`
-            )
-          )
-        )
-      }
+      if (!isOpen) return null;
 
-      // Mount
-      function mount() {
-        try {
-          const rootNode = document.getElementById('root');
-          const root = ReactDOM.createRoot(rootNode);
-          root.render(React.createElement(App));
-        } catch (err) {
-          const el = document.getElementById('boot-error') || (() => {
-            const b = document.createElement('div');
-            b.id = 'boot-error';
-            b.style.cssText = 'position:fixed;left:1rem;right:1rem;bottom:1rem;background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;padding:.75rem 1rem;border-radius:.75rem;font:12px system-ui,-apple-system,Segoe UI,Roboto;z-index:99999;';
-            document.body.appendChild(b); return b;
-          })();
-          el.textContent = 'Mount error: ' + err.message;
+      return (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose}></div>
+          <div className="relative bg-dark-800 border border-amber-500/20 w-full max-w-2xl rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.1)] flex flex-col max-h-[85vh]">
+            <div className="p-6 border-b border-white/5 bg-gradient-to-r from-dark-800 to-amber-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="bg-amber-500/20 p-2 rounded-lg"><Sparkles className="text-amber-500" size={24} /></div>
+                <div><h3 className="text-xl font-bold text-white">مستشارك الذكي</h3><p className="text-xs text-gray-400">مدعوم بواسطة Google Gemini</p></div>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-white"><X size={24} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {!hasSearched ? (
+                 <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12">
+                   <Sparkles size={48} className="text-gray-700" />
+                   <p className="text-gray-400 text-lg">أخبرني بما تبحث عنه أو ما هي اهتماماتك...</p>
+                   <div className="flex flex-wrap gap-2 justify-center">
+                     {['أحب الأفلام الأجنبية', 'أحتاج أدوات للتصميم', 'أبحث عن اشتراك لمشاهدة الدوري السعودي'].map((s, i) => (
+                       <button key={i} onClick={() => setQuery(s)} className="text-xs bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1 rounded-full border border-white/5 transition-colors">{s}</button>
+                     ))}
+                   </div>
+                 </div>
+              ) : isLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 space-y-4"><Loader2 className="animate-spin text-amber-500" size={40} /><p className="text-gray-400 animate-pulse">جاري تحليل طلبك واختيار الأفضل...</p></div>
+              ) : (
+                <div className="space-y-6">
+                  <h4 className="text-white font-medium">بناءً على طلبك، أرشح لك:</h4>
+                  {recommendations.length > 0 ? (
+                    recommendations.map((rec, idx) => {
+                      const product = getProductDetails(rec.productId);
+                      if (!product) return null;
+                      return (
+                        <div key={idx} className="bg-dark-900 border border-white/10 rounded-xl p-4 flex gap-4 animate-fade-in hover:border-amber-500/30 transition-colors">
+                          <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded-lg" />
+                          <div className="flex-1">
+                            <h5 className="text-white font-bold">{product.name}</h5>
+                            <p className="text-sm text-amber-400 mb-2 mt-1">{rec.reason}</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-bold">{product.price} {product.duration}</span>
+                              <button onClick={() => { onAddToCart(product); onClose(); }} className="bg-white text-black px-4 py-1.5 rounded text-sm font-bold hover:bg-amber-400 transition-colors">شراء الآن</button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (<p className="text-center text-gray-500">عذراً، لم أجد نتائج مطابقة تماماً.</p>)}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-white/10 bg-dark-900">
+              <form onSubmit={handleSearch} className="relative">
+                <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="اكتب هنا.. (مثال: أريد اشتراك لمشاهدة المسلسلات بجودة عالية)" className="w-full bg-dark-800 border border-white/10 text-white pl-4 pr-12 py-4 rounded-xl focus:outline-none focus:border-amber-500/50" />
+                <button type="submit" disabled={isLoading || !query.trim()} className="absolute left-2 top-2 bottom-2 bg-amber-500 text-black p-2 rounded-lg hover:bg-amber-400 disabled:opacity-50">{isLoading ? <Loader2 className="animate-spin" size={20} /> : <ArrowLeft size={20} />}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const Footer = () => (
+      <footer className="bg-dark-900 border-t border-white/10 pt-16 pb-8">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+            <div className="col-span-1 md:col-span-2">
+              <div className="text-2xl font-bold tracking-tighter flex items-center gap-2 mb-6"><span className="text-white">DIGITAL</span><span className="text-amber-500">SOUQ</span></div>
+              <p className="text-gray-400 max-w-sm leading-relaxed">وجهتك الأولى للمنتجات الرقمية والاشتراكات. جودة عالية، ضمان شامل، ودعم فني على مدار الساعة لخدمتك.</p>
+            </div>
+            <div>
+              <h4 className="text-white font-bold mb-6">روابط سريعة</h4>
+              <ul className="space-y-4 text-gray-400">
+                <li><a href="#" className="hover:text-amber-500 transition-colors">عن المتجر</a></li>
+                <li><a href="#" className="hover:text-amber-500 transition-colors">الشروط والأحكام</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-bold mb-6">تواصل معنا</h4>
+              <p className="text-gray-500 text-sm">support@digitalsouq.com</p>
+            </div>
+          </div>
+          <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+            <p>© 2024 {APP_NAME}. جميع الحقوق محفوظة.</p>
+          </div>
+        </div>
+      </footer>
+    );
+
+    const App = () => {
+      const [cartItems, setCartItems] = useState([]);
+      const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+      const [activeCategory, setActiveCategory] = useState(Category.ALL);
+      const [activeSubCategory, setActiveSubCategory] = useState(SubCategory.NONE);
+      const [currentView, setCurrentView] = useState('home');
+      const [selectedProduct, setSelectedProduct] = useState(null);
+      const [language, setLanguage] = useState('ar');
+
+      const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][language] : key;
+
+      useEffect(() => {
+        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+        document.documentElement.lang = language;
+      }, [language]);
+
+      const addToCart = (product) => {
+        setCartItems(prev => {
+          const existing = prev.find(item => item.id === product.id);
+          return existing 
+            ? prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item)
+            : [...prev, { ...product, quantity: 1 }];
+        });
+      };
+
+      const removeFromCart = (id) => setCartItems(prev => prev.filter(item => item.id !== id));
+      
+      const updateQuantity = (id, delta) => {
+        setCartItems(prev => prev.map(item => item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item));
+      };
+
+      const handleProductClick = (product) => {
+        setSelectedProduct(product);
+        setCurrentView('product_details');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const getSubCategories = () => {
+        switch (activeCategory) {
+          case Category.ENTERTAINMENT: return [SubCategory.NETFLIX, SubCategory.SHAHID, SubCategory.IPTV, SubCategory.MUSIC];
+          case Category.GAMING: return [SubCategory.MOBILE_GAME, SubCategory.PC_GAME, SubCategory.CONSOLE];
+          case Category.SECURITY_APPS: return [SubCategory.AI_TOOLS, SubCategory.VPN, SubCategory.DESIGN];
+          default: return [];
         }
-      }
+      };
 
-      if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        mount();
-      } else {
-        document.addEventListener('DOMContentLoaded', mount);
-      }
-    })();
+      const filteredProducts = PRODUCTS.filter(p => {
+        const catMatch = activeCategory === Category.ALL || p.category === activeCategory;
+        const subCatMatch = activeSubCategory === SubCategory.NONE || p.subCategory === activeSubCategory;
+        return catMatch && subCatMatch;
+      });
+
+      const currentSubCategories = getSubCategories();
+
+      return (
+        <div className="min-h-screen bg-dark-900 text-white font-sans selection:bg-amber-500 selection:text-black">
+          <Header 
+            cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)} 
+            onOpenCart={() => { setCurrentView('cart'); window.scrollTo(0,0); }}
+            onOpenAI={() => setIsAIModalOpen(true)}
+            onNavigateHome={() => { setCurrentView('home'); window.scrollTo(0,0); }}
+            language={language}
+            setLanguage={setLanguage}
+          />
+          
+          <main>
+            {currentView === 'home' && (
+              <>
+                <Hero language={language} />
+                <section id="products" className="container mx-auto px-6 py-20">
+                  <div className="flex flex-col gap-6 mb-12">
+                    <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+                       <div><h2 className="text-3xl md:text-4xl font-bold mb-4">{t('store')}</h2><p className="text-gray-400">{t('heroSubtitle')}</p></div>
+                       <div className="flex flex-wrap gap-2">
+                         {Object.values(Category).map((cat) => (
+                           <button key={cat} onClick={() => { setActiveCategory(cat); setActiveSubCategory(SubCategory.NONE); }} className={`px-6 py-3 rounded-full text-sm font-bold transition-all border border-transparent ${activeCategory === cat ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-dark-800 text-gray-400 border-white/5 hover:border-amber-500/30'}`}>{t(`category_${cat}`)}</button>
+                         ))}
+                       </div>
+                    </div>
+                    {currentSubCategories.length > 0 && (
+                      <div className="flex flex-wrap gap-2 animate-fade-in">
+                        <button onClick={() => setActiveSubCategory(SubCategory.NONE)} className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${activeSubCategory === SubCategory.NONE ? 'bg-white text-black' : 'bg-dark-800 text-gray-400 hover:text-white'}`}>{t('category_all')}</button>
+                        {currentSubCategories.map(sub => (
+                          <button key={sub} onClick={() => setActiveSubCategory(sub)} className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${activeSubCategory === sub ? 'bg-white text-black' : 'bg-dark-800 text-gray-400 hover:text-white'}`}>{t(`sub_${sub}`)}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredProducts.map(product => (
+                      <ProductCard key={product.id} product={product} onAddToCart={addToCart} onProductClick={handleProductClick} language={language} />
+                    ))}
+                  </div>
+                </section>
+                <section className="bg-gradient-to-r from-amber-600 to-amber-500 py-20 relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                   <div className="container mx-auto px-6 text-center relative z-10">
+                     <h2 className="text-3xl md:text-4xl font-bold text-black mb-6">{language === 'ar' ? 'محتار شنو تختار؟' : 'Can\'t decide?'}</h2>
+                     <p className="text-black/80 text-lg mb-8 max-w-2xl mx-auto">{language === 'ar' ? 'مساعدنا الذكي جاهز لمساعدتك في اختيار الاشتراك الأنسب لاحتياجاتك وميزانيتك في ثوانٍ.' : 'Our AI assistant is ready to help you choose the best subscription for your needs and budget in seconds.'}</p>
+                     <button onClick={() => setIsAIModalOpen(true)} className="bg-black text-white px-8 py-4 rounded-sm font-bold hover:scale-105 transition-transform shadow-xl">{t('aiAssistant')}</button>
+                   </div>
+                </section>
+              </>
+            )}
+            {currentView === 'product_details' && selectedProduct && (
+              <ProductDetails product={selectedProduct} language={language} onAddToCart={addToCart} onBack={() => { setCurrentView('home'); window.scrollTo(0,0); }} onProductClick={handleProductClick} />
+            )}
+            {currentView === 'cart' && (
+              <CartView items={cartItems} language={language} onRemove={removeFromCart} onUpdateQty={updateQuantity} onContinueShopping={() => { setCurrentView('home'); window.scrollTo(0,0); }} />
+            )}
+          </main>
+          <Footer />
+          <AIAssistantModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} onAddToCart={addToCart} />
+        </div>
+      );
+    };
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
   </script>
 </body>
 </html>
