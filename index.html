@@ -2,10 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>بطاقة رمضان</title>
+  <title>صانع بطاقات رمضان - EraAI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Arabic Font -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -13,157 +11,179 @@
       --primary-dark: #0B5C7A;
       --primary-teal: #22BDB6;
       --secondary-teal: #6CCED8;
-      --dark-green: #3F6F66;
-      --light-gray: #E6E7E8;
-      --dark-gray: #7A7A78;
+      --white: #ffffff;
     }
 
     body {
       margin: 0;
       font-family: 'Cairo', sans-serif;
-      background: linear-gradient(180deg, var(--primary-dark), var(--dark-green));
-      min-height: 100vh;
+      background: #f4f7f6; /* خلفية فاتحة ومريحة */
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      min-height: 100vh;
+      color: #333;
     }
 
-    .container {
+    .card-creator {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+      max-width: 450px;
+      width: 90%;
       text-align: center;
-      padding: 24px;
-      max-width: 360px;
-      width: 100%;
     }
 
-    h1 {
-      margin-bottom: 16px;
-      font-weight: 700;
+    .card-creator h1 {
+      color: var(--primary-dark);
+      margin-bottom: 25px;
+      font-size: 24px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
     }
 
     input {
       width: 100%;
-      padding: 14px;
-      font-size: 18px;
-      border-radius: 10px;
-      border: none;
-      text-align: center;
-      margin-bottom: 14px;
-      outline: none;
-    }
-
-    /* 🔘 Button with motion */
-    .action-btn {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, var(--primary-teal), var(--secondary-teal));
-      border: none;
+      padding: 15px;
+      border: 2px solid #eee;
       border-radius: 12px;
       font-size: 16px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--primary-teal);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
       font-weight: 700;
       cursor: pointer;
-      color: #00343A;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+      transition: all 0.3s;
+      font-size: 16px;
+      margin-bottom: 10px;
     }
 
-    .action-btn:active {
-      transform: scale(0.96);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    .btn-generate {
+      background: var(--primary-dark);
+      color: white;
     }
 
-    /* Ripple Effect */
-    .action-btn::after {
-      content: "";
-      position: absolute;
-      width: 120%;
-      height: 120%;
-      top: 50%;
-      left: 50%;
-      background: rgba(255,255,255,0.35);
-      transform: translate(-50%, -50%) scale(0);
-      border-radius: 50%;
-      transition: transform 0.4s ease;
+    .btn-generate:hover {
+      background: #084a63;
     }
 
-    .action-btn:active::after {
-      transform: translate(-50%, -50%) scale(1);
-      transition: transform 0s;
+    .btn-download {
+      background: var(--primary-teal);
+      color: white;
+      display: none;
+      text-decoration: none;
+      display: inline-block;
     }
 
     canvas {
       width: 100%;
-      border-radius: 14px;
-      margin-top: 16px;
+      height: auto;
+      border-radius: 15px;
+      margin-top: 20px;
       display: none;
-      background: var(--light-gray);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 
-    .download {
-      margin-top: 12px;
-      background: #fff;
-      color: var(--primary-dark);
+    .loader {
       display: none;
+      margin: 10px 0;
+      color: var(--primary-teal);
+      font-weight: bold;
     }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <h1>بطاقتك الرمضانية 🌙</h1>
 
-    <input id="nameInput" placeholder="اكتب اسمك" />
-
-    <button class="action-btn" onclick="generateCard()">
-      إنشاء البطاقة
-    </button>
-
-    <canvas id="cardCanvas" width="1080" height="1080"></canvas>
-
-    <button class="action-btn download" onclick="downloadImage()">
-      تحميل الصورة
-    </button>
+<div class="card-creator">
+  <h1>صمم بطاقة التهنئة الخاصة بك 🌙</h1>
+  
+  <div class="input-group">
+    <input type="text" id="userName" placeholder="أدخل الاسم الذي سيظهر في الصورة" maxlength="25">
   </div>
 
-  <script>
-    function generateCard() {
-      const name = document.getElementById("nameInput").value || "اسمك";
-      const canvas = document.getElementById("cardCanvas");
-      const ctx = canvas.getContext("2d");
+  <button class="btn btn-generate" onclick="drawCard()">إنشاء البطاقة</button>
+  <div id="loader" class="loader">جاري معالجة الصورة...</div>
 
-      const bg = new Image();
-      bg.src = "ramadan-bg.png"; // 👈 صورتك هنا
+  <canvas id="mainCanvas" width="1080" height="1080"></canvas>
+  
+  <a id="downloadBtn" class="btn btn-download" style="display: none;" onclick="downloadImage()">تحميل الصورة بجودة عالية</a>
+</div>
 
-      bg.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+<script>
+  // 🔗 ضع رابط صورتك المباشر هنا (تأكد أن الرابط ينتهي بـ .png أو .jpg)
+  const IMAGE_URL = 'ضع_رابط_صورتك_هنا.png'; 
 
-        ctx.textAlign = "center";
-        ctx.fillStyle = "#ffffff";
-
-        ctx.font = "bold 72px Cairo";
-        ctx.fillText("رمضان كريم", canvas.width / 2, 720);
-
-        ctx.font = "600 64px Cairo";
-        ctx.fillText(name, canvas.width / 2, 800);
-
-        ctx.font = "400 42px Cairo";
-        ctx.fillText("تقبل الله طاعاتكم", canvas.width / 2, 870);
-
-        canvas.style.display = "block";
-        document.querySelector(".download").style.display = "block";
-      };
+  function drawCard() {
+    const name = document.getElementById('userName').value.trim();
+    if (!name) {
+      alert("يرجى كتابة الاسم أولاً");
+      return;
     }
 
-    function downloadImage() {
-      const canvas = document.getElementById("cardCanvas");
-      const link = document.createElement("a");
-      link.download = "ramadan-card.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    }
-  </script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const loader = document.getElementById('loader');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    loader.style.display = 'block';
+
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // هامة جداً للسماح بتحميل الصور من روابط خارجية
+    img.src = IMAGE_URL;
+
+    img.onload = function() {
+      // تنظيف الكانفاس
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // رسم الخلفية
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // إعدادات النص
+      ctx.fillStyle = "#FFFFFF"; // لون الخط (يمكنك تغييره حسب تصميمك)
+      ctx.textAlign = "center";
+      ctx.font = "bold 65px 'Cairo'"; // حجم الخط ونوعه
+
+      /**
+       * 📍 تعديل مكان النص:
+       * canvas.width / 2 = في منتصف العرض
+       * 850 = الارتفاع من الأعلى (غير هذا الرقم لرفع أو خفض الاسم)
+       */
+      ctx.fillText(name, canvas.width / 2, 850);
+
+      // إظهار النتائج
+      loader.style.display = 'none';
+      canvas.style.display = 'block';
+      downloadBtn.style.display = 'block';
+    };
+
+    img.onerror = function() {
+      loader.style.display = 'none';
+      alert("فشل تحميل صورة الخلفية. تأكد من صحة الرابط.");
+    };
+  }
+
+  function downloadImage() {
+    const canvas = document.getElementById('mainCanvas');
+    const link = document.createElement('a');
+    link.download = 'Ramadan-Card.png';
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+  }
+</script>
+
 </body>
 </html>
