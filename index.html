@@ -9,10 +9,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --primary-dark: #0B5C7A;
+      --primary-teal: #22BDB6;
+      --secondary-teal: #6CCED8;
+      --dark-green: #3F6F66;
+      --light-gray: #E6E7E8;
+      --dark-gray: #7A7A78;
+    }
+
     body {
       margin: 0;
       font-family: 'Cairo', sans-serif;
-      background: linear-gradient(180deg, #0f3d2e, #08261d);
+      background: linear-gradient(180deg, var(--primary-dark), var(--dark-green));
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -22,47 +31,80 @@
 
     .container {
       text-align: center;
-      padding: 20px;
+      padding: 24px;
       max-width: 360px;
       width: 100%;
     }
 
     h1 {
-      margin-bottom: 10px;
+      margin-bottom: 16px;
+      font-weight: 700;
     }
 
     input {
       width: 100%;
       padding: 14px;
       font-size: 18px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: none;
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      outline: none;
     }
 
-    button {
+    /* 🔘 Button with motion */
+    .action-btn {
       width: 100%;
       padding: 14px;
-      background: #d4af37;
+      background: linear-gradient(135deg, var(--primary-teal), var(--secondary-teal));
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 16px;
-      font-weight: bold;
+      font-weight: 700;
       cursor: pointer;
-      margin-bottom: 12px;
+      color: #00343A;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+    }
+
+    .action-btn:active {
+      transform: scale(0.96);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    }
+
+    /* Ripple Effect */
+    .action-btn::after {
+      content: "";
+      position: absolute;
+      width: 120%;
+      height: 120%;
+      top: 50%;
+      left: 50%;
+      background: rgba(255,255,255,0.35);
+      transform: translate(-50%, -50%) scale(0);
+      border-radius: 50%;
+      transition: transform 0.4s ease;
+    }
+
+    .action-btn:active::after {
+      transform: translate(-50%, -50%) scale(1);
+      transition: transform 0s;
     }
 
     canvas {
       width: 100%;
-      border-radius: 12px;
-      margin-top: 10px;
+      border-radius: 14px;
+      margin-top: 16px;
       display: none;
+      background: var(--light-gray);
     }
 
     .download {
+      margin-top: 12px;
       background: #fff;
-      color: #0f3d2e;
+      color: var(--primary-dark);
       display: none;
     }
   </style>
@@ -74,11 +116,15 @@
 
     <input id="nameInput" placeholder="اكتب اسمك" />
 
-    <button onclick="generateCard()">إنشاء البطاقة</button>
+    <button class="action-btn" onclick="generateCard()">
+      إنشاء البطاقة
+    </button>
 
     <canvas id="cardCanvas" width="1080" height="1080"></canvas>
 
-    <button class="download" onclick="downloadImage()">تحميل الصورة</button>
+    <button class="action-btn download" onclick="downloadImage()">
+      تحميل الصورة
+    </button>
   </div>
 
   <script>
@@ -88,24 +134,23 @@
       const ctx = canvas.getContext("2d");
 
       const bg = new Image();
-      bg.src = "ramadan-bg.jpg"; // 🔴 غير اسم الصورة إذا حبيت
+      bg.src = "ramadan-bg.png"; // 👈 صورتك هنا
 
       bg.onload = () => {
-        // background image
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
-        // text
         ctx.textAlign = "center";
         ctx.fillStyle = "#ffffff";
 
         ctx.font = "bold 72px Cairo";
-        ctx.fillText("رمضان كريم", canvas.width / 2, 700);
+        ctx.fillText("رمضان كريم", canvas.width / 2, 720);
 
         ctx.font = "600 64px Cairo";
-        ctx.fillText(name, canvas.width / 2, 790);
+        ctx.fillText(name, canvas.width / 2, 800);
 
         ctx.font = "400 42px Cairo";
-        ctx.fillText("تقبل الله طاعاتكم", canvas.width / 2, 860);
+        ctx.fillText("تقبل الله طاعاتكم", canvas.width / 2, 870);
 
         canvas.style.display = "block";
         document.querySelector(".download").style.display = "block";
@@ -122,4 +167,3 @@
   </script>
 </body>
 </html>
-
