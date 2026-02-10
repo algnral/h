@@ -1,782 +1,125 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SubSouq | متجر الاشتراكات الرقمية</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Google Fonts: Tajawal -->
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-  
-  <!-- Configuration -->
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Tajawal', 'sans-serif'],
-          },
-          colors: {
-            gold: {
-              400: '#fbbf24',
-              500: '#f59e0b',
-              600: '#d97706',
-            },
-            dark: {
-              900: '#0a0a0a',
-              800: '#171717',
-              700: '#262626',
-            }
-          },
-          animation: {
-            'fade-in': 'fadeIn 0.5s ease-in-out',
-            'slide-in': 'slideIn 0.3s ease-out',
-          },
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0', transform: 'translateY(10px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
-            slideIn: {
-              '0%': { transform: 'translateX(100%)' },
-              '100%': { transform: 'translateX(0)' },
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <meta charset="UTF-8" />
+  <title>بطاقة رمضان</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Arabic Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
     body {
-      background-color: #0a0a0a;
-      color: #e5e5e5;
-      overflow-x: hidden;
+      margin: 0;
+      font-family: 'Cairo', sans-serif;
+      background: linear-gradient(180deg, #0f3d2e, #08261d);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
     }
-    .scrollbar-hide::-webkit-scrollbar {
-        display: none;
+
+    .container {
+      text-align: center;
+      padding: 20px;
+      max-width: 360px;
+      width: 100%;
     }
-    .glass {
-      background: rgba(23, 23, 23, 0.8);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+
+    h1 {
+      margin-bottom: 10px;
     }
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      text-align: center;
+      margin-bottom: 12px;
     }
-    ::-webkit-scrollbar-track {
-      background: #0a0a0a;
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #d4af37;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 12px;
     }
-    ::-webkit-scrollbar-thumb {
-      background: #333;
-      border-radius: 4px;
+
+    canvas {
+      width: 100%;
+      border-radius: 12px;
+      margin-top: 10px;
+      display: none;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #555;
+
+    .download {
+      background: #fff;
+      color: #0f3d2e;
+      display: none;
     }
   </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
-  }
-}
-</script>
 </head>
-<body class="antialiased min-h-screen flex flex-col">
 
-  <!-- Header -->
-  <header id="header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4 border-b border-transparent">
-    <!-- Content injected by JS -->
-  </header>
+<body>
+  <div class="container">
+    <h1>بطاقتك الرمضانية 🌙</h1>
 
-  <!-- Mobile Menu Overlay -->
-  <div id="mobile-menu" class="fixed inset-0 z-40 bg-dark-900 transform translate-x-full transition-transform duration-300 lg:hidden flex flex-col pt-24 px-6 gap-6">
-    <!-- Content injected by JS -->
+    <input id="nameInput" placeholder="اكتب اسمك" />
+
+    <button onclick="generateCard()">إنشاء البطاقة</button>
+
+    <canvas id="cardCanvas" width="1080" height="1080"></canvas>
+
+    <button class="download" onclick="downloadImage()">تحميل الصورة</button>
   </div>
 
-  <!-- Cart Sidebar -->
-  <div id="cart-sidebar" class="fixed inset-y-0 right-0 z-[60] w-full sm:w-96 bg-dark-800 border-l border-white/10 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col rtl:left-0 rtl:right-auto rtl:border-l-0 rtl:border-r rtl:-translate-x-full">
-    <!-- Content injected by JS -->
-  </div>
-  <div id="cart-overlay" class="fixed inset-0 z-[55] bg-black/80 backdrop-blur-sm hidden transition-opacity opacity-0"></div>
-
-  <!-- Main Content -->
-  <main id="app-content" class="flex-grow pt-20">
-    <!-- Views injected by JS -->
-  </main>
-
-  <!-- Footer -->
-  <footer id="footer" class="bg-dark-900 border-t border-white/10 pt-16 pb-8 mt-auto">
-    <!-- Content injected by JS -->
-  </footer>
-
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-amber-500 text-black px-6 py-3 rounded-full font-bold shadow-lg translate-y-20 transition-transform duration-300 z-[100] flex items-center gap-2">
-    <i class="fa-solid fa-check-circle"></i>
-    <span id="toast-message">Item Added</span>
-  </div>
-
-  <!-- Application Logic -->
   <script>
-    // --- DATA ---
-    const TRANSLATIONS = {
-      home: { ar: 'الرئيسية', en: 'Home' },
-      store: { ar: 'المتجر', en: 'Store' },
-      about: { ar: 'عن المتجر', en: 'About' },
-      aiAssistant: { ar: 'المساعد الذكي', en: 'AI Concierge' },
-      cart: { ar: 'السلة', en: 'Cart' },
-      heroTitle: { ar: 'ارتقِ بتجربتك الرقمية', en: 'Elevate Your Digital Experience' },
-      heroSubtitle: { ar: 'متجر الاشتراكات الأول', en: 'Premium Subscriptions Store' },
-      heroDesc: { 
-        ar: 'نقدم لك أفضل الاشتراكات العالمية بأرخص الأسعار. نتفليكس، شاهد، برامج التصميم والذكاء الاصطناعي بين يديك في ثوانٍ.',
-        en: 'We offer the best global subscriptions at the lowest prices. Netflix, Shahid, Design tools, and AI software in your hands in seconds.'
-      },
-      browseProducts: { ar: 'تصفح المنتجات', en: 'Browse Products' },
-      todayDeals: { ar: 'عروض اليوم', en: 'Today\'s Deals' },
-      addToCart: { ar: 'أضف للسلة', en: 'Add to Cart' },
-      category_all: { ar: 'الكل', en: 'All' },
-      category_entertainment: { ar: 'ترفيه', en: 'Entertainment' },
-      category_gaming: { ar: 'ألعاب', en: 'Gaming' },
-      category_security_apps: { ar: 'حماية وتطبيقات', en: 'Apps & Security' },
-      checkout: { ar: 'إتمام الشراء', en: 'Checkout' },
-      total: { ar: 'الإجمالي', en: 'Total' },
-      emptyCart: { ar: 'السلة فارغة', en: 'Your cart is empty' },
-      continueShopping: { ar: 'متابعة التسوق', en: 'Continue Shopping' },
-      subtotal: { ar: 'المجموع الفرعي', en: 'Subtotal' },
-      aiPromptTitle: { ar: 'محتار وش تختار؟', en: 'Not sure what to choose?' },
-      aiPromptDesc: { ar: 'اكتب اهتماماتك وسنقترح عليك الأفضل', en: 'Type your interests and we will suggest the best' },
-      aiButton: { ar: 'اقترح لي اشتراكات', en: 'Suggest Subscriptions' },
-      aiPlaceholder: { ar: 'مثال: أحب الأفلام والمسلسلات...', en: 'Ex: I love movies and series...' },
-      recommendedForYou: { ar: 'موصى به لك', en: 'Recommended for You' },
-      footerText: { ar: 'وجهتك الأولى للمنتجات الرقمية والاشتراكات. جودة عالية، ضمان شامل، ودعم فني على مدار الساعة.', en: 'Your #1 destination for digital products and subscriptions. High quality, full warranty, and 24/7 support.' },
-      links: { ar: 'روابط سريعة', en: 'Quick Links' },
-      contact: { ar: 'تواصل معنا', en: 'Contact Us' },
-      rights: { ar: 'جميع الحقوق محفوظة', en: 'All rights reserved' }
-    };
+    function generateCard() {
+      const name = document.getElementById("nameInput").value || "اسمك";
+      const canvas = document.getElementById("cardCanvas");
+      const ctx = canvas.getContext("2d");
 
-    const PRODUCTS = [
-      {
-        id: 'nf-4k',
-        nameAr: 'نتفليكس بريميوم (4K)',
-        nameEn: 'Netflix Premium (4K)',
-        descriptionAr: 'استمتع بأفلام ومسلسلات غير محدودة بدقة 4K Ultra HD. ملف خاص.',
-        descriptionEn: 'Unlimited movies & TV shows in 4K Ultra HD. Private profile.',
-        price: 25,
-        originalPrice: 45,
-        category: 'entertainment',
-        imageUrl: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=800&auto=format&fit=crop',
-        tags: ['فيلم', 'مسلسلات', 'سينما', 'movies', 'series', 'netflix'],
-        durationAr: '1 شهر',
-        durationEn: '1 Month'
-      },
-      {
-        id: 'shahid-vip',
-        nameAr: 'شاهد VIP + رياضة',
-        nameEn: 'Shahid VIP + Sports',
-        descriptionAr: 'أضخم مكتبة للمحتوى العربي + دوري روشن السعودي مباشر.',
-        descriptionEn: 'Largest Arabic content library + Saudi Roshn League live.',
-        price: 35,
-        originalPrice: 59,
-        category: 'entertainment',
-        imageUrl: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?q=80&w=800&auto=format&fit=crop',
-        tags: ['رياضة', 'دوري', 'سعودي', 'مسلسلات', 'sports', 'football', 'shahid'],
-        durationAr: '1 شهر',
-        durationEn: '1 Month'
-      },
-      {
-        id: 'iptv-gold',
-        nameAr: 'IPTV سيرفر ذهبي',
-        nameEn: 'IPTV Gold Server',
-        descriptionAr: 'أكثر من 10,000 قناة عالمية وعربية مشفرة ومفتوحة.',
-        descriptionEn: '+10,000 global and Arabic channels, encrypted and free.',
-        price: 99,
-        originalPrice: 150,
-        category: 'entertainment',
-        imageUrl: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?q=80&w=800&auto=format&fit=crop',
-        tags: ['قنوات', 'بث', 'تلفزيون', 'tv', 'channels', 'live'],
-        durationAr: '1 سنة',
-        durationEn: '1 Year'
-      },
-      {
-        id: 'chatgpt',
-        nameAr: 'ChatGPT Plus مشترك',
-        nameEn: 'ChatGPT Plus Shared',
-        descriptionAr: 'وصول لنموذج GPT-4 القوي مع ميزات التحليل والرسم.',
-        descriptionEn: 'Access to powerful GPT-4 model with analysis and drawing.',
-        price: 40,
-        originalPrice: 80,
-        category: 'security_apps',
-        imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=800&auto=format&fit=crop',
-        tags: ['ذكاء', 'ai', 'gpt', 'bot', 'code', 'كتابة'],
-        durationAr: '1 شهر',
-        durationEn: '1 Month'
-      },
-      {
-        id: 'midjourney',
-        nameAr: 'Midjourney ستاندرد',
-        nameEn: 'Midjourney Standard',
-        descriptionAr: 'ولد صور احترافية بالذكاء الاصطناعي بدقة عالية.',
-        descriptionEn: 'Generate professional AI images in high quality.',
-        price: 120,
-        originalPrice: 200,
-        category: 'security_apps',
-        imageUrl: 'https://images.unsplash.com/photo-1686191128892-3b37813f4151?q=80&w=800&auto=format&fit=crop',
-        tags: ['تصميم', 'صور', 'art', 'design', 'images'],
-        durationAr: '1 شهر',
-        durationEn: '1 Month'
-      },
-      {
-        id: 'pubg-uc',
-        nameAr: 'ببجي موبايل 660 شدة',
-        nameEn: 'PUBG Mobile 660 UC',
-        descriptionAr: 'شحن فوري لشدات ببجي موبايل عن طريق الآيدي.',
-        descriptionEn: 'Instant PUBG Mobile UC top-up via ID.',
-        price: 38,
-        originalPrice: 42,
-        category: 'gaming',
-        imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop',
-        tags: ['لعبة', 'ببجي', 'game', 'pubg', 'mobile'],
-        durationAr: 'دائم',
-        durationEn: 'Lifetime'
-      },
-      {
-        id: 'xbox-pass',
-        nameAr: 'Xbox Game Pass Ultimate',
-        nameEn: 'Xbox Game Pass Ultimate',
-        descriptionAr: 'مئات الألعاب للكونسول والكمبيوتر الشخصي.',
-        descriptionEn: 'Hundreds of games for console and PC.',
-        price: 45,
-        originalPrice: 70,
-        category: 'gaming',
-        imageUrl: 'https://images.unsplash.com/photo-1605901309584-818e25960b8f?q=80&w=800&auto=format&fit=crop',
-        tags: ['xbox', 'games', 'ألعاب', 'اكس بوكس'],
-        durationAr: '1 شهر',
-        durationEn: '1 Month'
-      },
-      {
-        id: 'nord-vpn',
-        nameAr: 'NordVPN بريميوم',
-        nameEn: 'NordVPN Premium',
-        descriptionAr: 'تصفح آمن وخصوصية تامة. فتح المواقع المحجوبة.',
-        descriptionEn: 'Secure browsing and privacy. Unblock websites.',
-        price: 15,
-        originalPrice: 30,
-        category: 'security_apps',
-        imageUrl: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?q=80&w=800&auto=format&fit=crop',
-        tags: ['vpn', 'security', 'حماية', 'خصوصية', 'internet'],
-        durationAr: '1 شهر',
-        durationEn: '1 Month'
-      }
-    ];
+      const bg = new Image();
+      bg.src = "ramadan-bg.png"; // 🔴 غير اسم الصورة إذا حبيت
 
-    // --- STATE ---
-    const state = {
-      lang: 'ar', // 'ar' or 'en'
-      cart: [], // Array of { ...product, quantity }
-      activeCategory: 'all',
-      isCartOpen: false,
-      aiRecommendations: []
-    };
+      bg.onload = () => {
+        // background image
+        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
-    // --- DOM ELEMENTS ---
-    const els = {
-      header: document.getElementById('header'),
-      mobileMenu: document.getElementById('mobile-menu'),
-      cartSidebar: document.getElementById('cart-sidebar'),
-      cartOverlay: document.getElementById('cart-overlay'),
-      appContent: document.getElementById('app-content'),
-      footer: document.getElementById('footer'),
-      toast: document.getElementById('toast'),
-      toastMessage: document.getElementById('toast-message'),
-      body: document.body,
-      html: document.documentElement
-    };
+        // text
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#ffffff";
 
-    // --- HELPERS ---
-    const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][state.lang] : key;
-    const formatPrice = (price) => state.lang === 'ar' ? `${price} ر.س` : `${price} SAR`;
+        ctx.font = "bold 72px Cairo";
+        ctx.fillText("رمضان كريم", canvas.width / 2, 700);
 
-    // --- RENDERERS ---
+        ctx.font = "600 64px Cairo";
+        ctx.fillText(name, canvas.width / 2, 790);
 
-    function renderHeader() {
-      const isAr = state.lang === 'ar';
-      const cartCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-      
-      const navLinks = `
-        <a href="#" onclick="navigateTo('home')" class="text-gray-300 hover:text-white transition-colors">${t('home')}</a>
-        <a href="#store" onclick="navigateTo('store')" class="text-gray-300 hover:text-white transition-colors">${t('store')}</a>
-      `;
+        ctx.font = "400 42px Cairo";
+        ctx.fillText("تقبل الله طاعاتكم", canvas.width / 2, 860);
 
-      els.header.innerHTML = `
-        <div class="container mx-auto px-6 flex justify-between items-center">
-          <div onclick="navigateTo('home')" class="text-2xl font-bold tracking-tighter flex items-center gap-2 cursor-pointer select-none">
-            <span class="text-white">DIGITAL</span>
-            <span class="text-amber-500">SOUQ</span>
-            <div class="text-[10px] text-gray-500 mt-1 hidden sm:block">${isAr ? 'متجر الاشتراكات الرقمية' : 'Digital Subscriptions'}</div>
-          </div>
-
-          <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
-            ${navLinks}
-          </nav>
-
-          <div class="flex items-center gap-4">
-            <button onclick="toggleLanguage()" class="flex items-center gap-1 text-gray-300 hover:text-white transition-colors text-sm font-bold uppercase">
-              <i class="fa-solid fa-globe"></i>
-              ${isAr ? 'EN' : 'عربي'}
-            </button>
-
-            <button onclick="toggleCart()" class="relative p-2 text-white hover:text-amber-500 transition-colors">
-              <i class="fa-solid fa-bag-shopping fa-lg"></i>
-              ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold animate-fade-in">${cartCount}</span>` : ''}
-            </button>
-
-            <button onclick="toggleMobileMenu()" class="md:hidden text-white p-2">
-              <i class="fa-solid fa-bars fa-lg"></i>
-            </button>
-          </div>
-        </div>
-      `;
-
-      // Update Header Background on Scroll
-      window.onscroll = () => {
-        if (window.scrollY > 50) {
-          els.header.classList.add('glass', 'py-3');
-          els.header.classList.remove('py-4', 'bg-transparent');
-        } else {
-          els.header.classList.remove('glass', 'py-3');
-          els.header.classList.add('py-4', 'bg-transparent');
-        }
+        canvas.style.display = "block";
+        document.querySelector(".download").style.display = "block";
       };
     }
 
-    function renderMobileMenu() {
-      els.mobileMenu.innerHTML = `
-        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-gray-400 hover:text-white">
-          <i class="fa-solid fa-xmark fa-2xl"></i>
-        </button>
-        <a href="#" onclick="navigateTo('home'); toggleMobileMenu()" class="text-2xl font-bold text-white hover:text-amber-500">${t('home')}</a>
-        <a href="#store" onclick="navigateTo('store'); toggleMobileMenu()" class="text-2xl font-bold text-white hover:text-amber-500">${t('store')}</a>
-      `;
+    function downloadImage() {
+      const canvas = document.getElementById("cardCanvas");
+      const link = document.createElement("a");
+      link.download = "ramadan-card.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
     }
-
-    function renderHero() {
-      const isAr = state.lang === 'ar';
-      return `
-        <section class="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
-          <div class="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2670&auto=format&fit=crop" alt="Hero BG" class="w-full h-full object-cover opacity-30">
-            <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/60 to-transparent"></div>
-          </div>
-
-          <div class="container mx-auto px-6 relative z-10 text-center animate-fade-in">
-            <span class="inline-block py-1 px-3 border border-amber-500/30 rounded-full text-amber-400 text-xs tracking-widest mb-6 uppercase">
-              ${t('heroSubtitle')}
-            </span>
-            <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              ${t('heroTitle')}
-            </h1>
-            <p class="text-gray-400 text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-              ${t('heroDesc')}
-            </p>
-            
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#store" onclick="navigateTo('store')" class="bg-white text-black px-8 py-4 rounded-sm font-bold flex items-center justify-center gap-2 hover:bg-amber-400 transition-all duration-300">
-                ${t('browseProducts')}
-                <i class="fa-solid ${isAr ? 'fa-arrow-left' : 'fa-arrow-right'}"></i>
-              </a>
-              <button onclick="navigateTo('store')" class="px-8 py-4 border border-white/20 text-white rounded-sm hover:bg-white/5 transition-all">
-                ${t('todayDeals')}
-              </button>
-            </div>
-          </div>
-        </section>
-      `;
-    }
-
-    function renderAISection() {
-      const isAr = state.lang === 'ar';
-      return `
-        <section class="bg-gradient-to-r from-amber-600 to-amber-500 py-16 relative overflow-hidden">
-          <div class="container mx-auto px-6 relative z-10">
-            <div class="max-w-3xl mx-auto text-center">
-              <h2 class="text-3xl font-bold text-black mb-4 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> ${t('aiPromptTitle')}
-              </h2>
-              <p class="text-black/80 mb-8 font-medium">${t('aiPromptDesc')}</p>
-              
-              <div class="bg-black/20 p-2 rounded-xl flex gap-2 backdrop-blur-sm">
-                <input type="text" id="ai-input" placeholder="${t('aiPlaceholder')}" 
-                  class="flex-grow bg-transparent text-white placeholder-black/50 px-4 py-3 outline-none font-medium">
-                <button onclick="handleAISuggestion()" class="bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-900 transition-colors">
-                  ${t('aiButton')}
-                </button>
-              </div>
-
-              <div id="ai-results" class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
-                <!-- Results injected here -->
-              </div>
-            </div>
-          </div>
-        </section>
-      `;
-    }
-
-    function renderStore() {
-      const isAr = state.lang === 'ar';
-      
-      // Filter products
-      const filtered = state.activeCategory === 'all' 
-        ? PRODUCTS 
-        : PRODUCTS.filter(p => p.category === state.activeCategory);
-
-      // Categories
-      const categories = [
-        { id: 'all', label: t('category_all') },
-        { id: 'entertainment', label: t('category_entertainment') },
-        { id: 'gaming', label: t('category_gaming') },
-        { id: 'security_apps', label: t('category_security_apps') }
-      ];
-
-      const categoryButtons = categories.map(cat => `
-        <button onclick="setCategory('${cat.id}')" 
-          class="px-6 py-2 rounded-full text-sm font-bold transition-all border ${
-            state.activeCategory === cat.id 
-            ? 'bg-amber-500 text-black border-amber-500' 
-            : 'bg-transparent text-gray-400 border-white/10 hover:border-amber-500/50 hover:text-white'
-          }">
-          ${cat.label}
-        </button>
-      `).join('');
-
-      // Products HTML
-      const productsHTML = filtered.map(p => `
-        <div class="group bg-dark-800 border border-white/5 rounded-xl overflow-hidden hover:border-amber-500/50 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
-          <div class="relative aspect-[4/3] overflow-hidden">
-            <img src="${p.imageUrl}" alt="${isAr ? p.nameAr : p.nameEn}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-            <div class="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-amber-400 text-xs font-bold px-3 py-1 rounded-full border border-white/10">
-              ${t('category_' + p.category)}
-            </div>
-          </div>
-          <div class="p-5">
-            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-amber-500 transition-colors">${isAr ? p.nameAr : p.nameEn}</h3>
-            <p class="text-gray-400 text-sm mb-4 line-clamp-2 h-10">${isAr ? p.descriptionAr : p.descriptionEn}</p>
-            
-            <div class="flex items-center justify-between pt-4 border-t border-white/5">
-              <div>
-                <span class="text-xs text-gray-500 line-through block">${formatPrice(p.originalPrice)}</span>
-                <span class="text-lg font-bold text-white">${formatPrice(p.price)}</span>
-              </div>
-              <button onclick="addToCart('${p.id}')" class="bg-amber-500 hover:bg-white text-black w-10 h-10 rounded-full flex items-center justify-center transition-colors">
-                <i class="fa-solid fa-plus"></i>
-              </button>
-            </div>
-            <div class="mt-2 text-[10px] text-gray-500 flex items-center gap-1">
-              <i class="fa-regular fa-clock"></i> ${isAr ? p.durationAr : p.durationEn}
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      return `
-        <section id="store" class="container mx-auto px-6 py-20">
-          <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-            <div>
-              <h2 class="text-3xl font-bold text-white mb-2">${t('store')}</h2>
-              <p class="text-gray-400 text-sm">${t('heroSubtitle')}</p>
-            </div>
-            <div class="flex flex-wrap gap-2 justify-center">
-              ${categoryButtons}
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in">
-            ${productsHTML}
-          </div>
-        </section>
-      `;
-    }
-
-    function renderCart() {
-      const isAr = state.lang === 'ar';
-      const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      let content = '';
-
-      if (state.cart.length === 0) {
-        content = `
-          <div class="flex-grow flex flex-col items-center justify-center text-center p-8">
-            <div class="bg-dark-900 p-6 rounded-full mb-4">
-              <i class="fa-solid fa-cart-shopping fa-3x text-gray-700"></i>
-            </div>
-            <h3 class="text-white font-bold text-xl mb-2">${t('emptyCart')}</h3>
-            <button onclick="toggleCart()" class="mt-4 text-amber-500 hover:text-white font-bold text-sm underline">${t('continueShopping')}</button>
-          </div>
-        `;
-      } else {
-        const itemsHTML = state.cart.map(item => `
-          <div class="flex gap-4 items-start bg-dark-900/50 p-4 rounded-lg mb-4">
-            <img src="${item.imageUrl}" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
-            <div class="flex-grow">
-              <h4 class="text-white font-bold text-sm mb-1">${isAr ? item.nameAr : item.nameEn}</h4>
-              <p class="text-amber-500 font-bold text-sm">${formatPrice(item.price)}</p>
-            </div>
-            <div class="flex flex-col items-end gap-2">
-              <button onclick="removeFromCart('${item.id}')" class="text-gray-500 hover:text-red-500 transition-colors">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-              <div class="flex items-center gap-3 bg-dark-900 rounded px-2 py-1">
-                <button onclick="updateQuantity('${item.id}', -1)" class="text-gray-400 hover:text-white">-</button>
-                <span class="text-white text-xs font-mono w-4 text-center">${item.quantity}</span>
-                <button onclick="updateQuantity('${item.id}', 1)" class="text-gray-400 hover:text-white">+</button>
-              </div>
-            </div>
-          </div>
-        `).join('');
-
-        content = `
-          <div class="flex-grow overflow-y-auto p-6 scrollbar-hide">
-            ${itemsHTML}
-          </div>
-          <div class="p-6 bg-dark-900 border-t border-white/10">
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-gray-400">${t('total')}</span>
-              <span class="text-2xl font-bold text-amber-500">${formatPrice(total)}</span>
-            </div>
-            <button class="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 rounded-xl transition-colors">
-              ${t('checkout')}
-            </button>
-          </div>
-        `;
-      }
-
-      els.cartSidebar.innerHTML = `
-        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-dark-800">
-          <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-bag-shopping text-amber-500"></i> ${t('cart')}
-          </h2>
-          <button onclick="toggleCart()" class="text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-        ${content}
-      `;
-    }
-
-    function renderFooter() {
-      els.footer.innerHTML = `
-        <div class="container mx-auto px-6">
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div class="col-span-1 md:col-span-2">
-              <div class="text-2xl font-bold tracking-tighter flex items-center gap-2 mb-6">
-                <span class="text-white">DIGITAL</span>
-                <span class="text-amber-500">SOUQ</span>
-              </div>
-              <p class="text-gray-400 max-w-sm leading-relaxed text-sm">
-                ${t('footerText')}
-              </p>
-            </div>
-            <div>
-              <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-wider">${t('links')}</h4>
-              <ul class="space-y-3 text-gray-400 text-sm">
-                <li><a href="#" class="hover:text-amber-500 transition-colors">${t('about')}</a></li>
-                <li><a href="#" class="hover:text-amber-500 transition-colors">${t('store')}</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-wider">${t('contact')}</h4>
-              <p class="text-gray-500 text-sm mb-4">support@subsouq.com</p>
-              <div class="flex gap-4">
-                <a href="#" class="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-gray-400 hover:bg-amber-500 hover:text-black transition-all"><i class="fa-brands fa-twitter"></i></a>
-                <a href="#" class="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-gray-400 hover:bg-amber-500 hover:text-black transition-all"><i class="fa-brands fa-instagram"></i></a>
-              </div>
-            </div>
-          </div>
-          <div class="border-t border-white/5 pt-8 text-center text-xs text-gray-600">
-            <p>&copy; 2024 DigitalSouq. ${t('rights')}.</p>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderApp() {
-      // Setup Document direction
-      els.html.dir = state.lang === 'ar' ? 'rtl' : 'ltr';
-      els.html.lang = state.lang;
-      
-      // Update Tailwind RTL compatibility if needed (Tailwind uses logical properties mostly, but dir handles layout)
-      
-      renderHeader();
-      renderMobileMenu();
-      renderCart(); // Re-render cart to update text direction
-      renderFooter();
-      
-      // Main Content Logic
-      const content = `
-        ${renderHero()}
-        ${renderAISection()}
-        ${renderStore()}
-      `;
-      els.appContent.innerHTML = content;
-    }
-
-    // --- ACTIONS ---
-
-    window.toggleLanguage = () => {
-      state.lang = state.lang === 'ar' ? 'en' : 'ar';
-      renderApp();
-    };
-
-    window.setCategory = (cat) => {
-      state.activeCategory = cat;
-      renderApp();
-      // Scroll to store to see changes
-      const storeSection = document.getElementById('store');
-      if(storeSection) storeSection.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    window.navigateTo = (view) => {
-      if (view === 'home') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (view === 'store') {
-        document.getElementById('store')?.scrollIntoView({ behavior: 'smooth' });
-      }
-    };
-
-    window.addToCart = (productId) => {
-      const product = PRODUCTS.find(p => p.id === productId);
-      if (!product) return;
-
-      const existing = state.cart.find(item => item.id === productId);
-      if (existing) {
-        existing.quantity++;
-      } else {
-        state.cart.push({ ...product, quantity: 1 });
-      }
-
-      renderHeader(); // Update badge
-      renderCart();   // Update cart HTML
-      showToast();
-    };
-
-    window.removeFromCart = (productId) => {
-      state.cart = state.cart.filter(item => item.id !== productId);
-      renderHeader();
-      renderCart();
-    };
-
-    window.updateQuantity = (productId, delta) => {
-      const item = state.cart.find(i => i.id === productId);
-      if (item) {
-        item.quantity += delta;
-        if (item.quantity <= 0) {
-          removeFromCart(productId);
-        } else {
-          renderCart();
-          renderHeader();
-        }
-      }
-    };
-
-    window.toggleCart = () => {
-      const sidebar = els.cartSidebar;
-      const overlay = els.cartOverlay;
-      const isOpen = !sidebar.classList.contains('translate-x-full') && !sidebar.classList.contains('rtl:-translate-x-full');
-      
-      // For RTL toggle logic
-      const hiddenClass = state.lang === 'ar' ? 'rtl:-translate-x-full' : 'translate-x-full';
-      // Actually standard Tailwind 'translate-x-full' moves right. In RTL we want it to hide left? 
-      // The CSS above sets: right: 0. So translate-x-full moves it out to right.
-      // In RTL, we might want it on Left.
-      // Let's stick to Right side for both for simplicity or handle RTL CSS properly.
-      // The CSS defined: `rtl:left-0 rtl:right-auto rtl:border-l-0 rtl:border-r rtl:-translate-x-full`
-      
-      if (isOpen) {
-        // Close
-        sidebar.classList.add('translate-x-full');
-        sidebar.classList.add('rtl:-translate-x-full');
-        overlay.classList.add('opacity-0');
-        setTimeout(() => overlay.classList.add('hidden'), 300);
-      } else {
-        // Open
-        renderCart();
-        sidebar.classList.remove('translate-x-full');
-        sidebar.classList.remove('rtl:-translate-x-full');
-        overlay.classList.remove('hidden');
-        // small delay to allow display:block to apply before opacity transition
-        requestAnimationFrame(() => overlay.classList.remove('opacity-0'));
-      }
-    };
-
-    // Close cart when clicking overlay
-    els.cartOverlay.onclick = window.toggleCart;
-
-    window.toggleMobileMenu = () => {
-      const menu = els.mobileMenu;
-      const isOpen = !menu.classList.contains('translate-x-full');
-      
-      if (isOpen) {
-        menu.classList.add('translate-x-full');
-      } else {
-        menu.classList.remove('translate-x-full');
-      }
-    };
-
-    window.showToast = () => {
-      const toast = els.toast;
-      toast.classList.remove('translate-y-20');
-      setTimeout(() => {
-        toast.classList.add('translate-y-20');
-      }, 2000);
-    };
-
-    window.handleAISuggestion = () => {
-      const input = document.getElementById('ai-input');
-      const resultsContainer = document.getElementById('ai-results');
-      const query = input.value.toLowerCase();
-      
-      if (!query) return;
-
-      // Simple keyword matching
-      const matches = PRODUCTS.filter(p => {
-        return p.tags.some(tag => query.includes(tag));
-      });
-
-      resultsContainer.classList.remove('hidden');
-      
-      if (matches.length === 0) {
-        resultsContainer.innerHTML = `<p class="text-black col-span-2 text-center font-bold bg-white/50 p-4 rounded-lg">لم نعثر على نتائج مطابقة، جرب كلمات مثل: أفلام، ألعاب، حماية</p>`;
-      } else {
-        const isAr = state.lang === 'ar';
-        resultsContainer.innerHTML = matches.slice(0, 2).map(p => `
-          <div class="bg-dark-900 border border-amber-500/30 p-4 rounded-lg flex items-center gap-3 animate-slide-in">
-            <img src="${p.imageUrl}" class="w-12 h-12 rounded object-cover">
-            <div class="flex-grow">
-              <h4 class="text-white font-bold text-sm">${isAr ? p.nameAr : p.nameEn}</h4>
-              <div class="text-amber-500 font-bold text-xs">${formatPrice(p.price)}</div>
-            </div>
-            <button onclick="addToCart('${p.id}')" class="bg-amber-500 text-black px-3 py-1 rounded text-xs font-bold hover:bg-white transition-colors">
-              ${isAr ? 'شراء' : 'Buy'}
-            </button>
-          </div>
-        `).join('');
-      }
-    };
-
-    // --- INIT ---
-    renderApp();
-
   </script>
 </body>
 </html>
+
