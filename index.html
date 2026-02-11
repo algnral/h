@@ -1,144 +1,131 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>National Day Card Generator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f4f4f4;
-      padding: 20px;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+<meta charset="UTF-8">
+<title>Ramadan Card Generator</title>
 
-    h2 {
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #f4f4f4;
+  padding: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    .controls {
-      display: flex;
-      flex-direction: row; /* desktop default */
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
 
-    input {
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      width: 250px;
-      max-width: 90%;
-      box-sizing: border-box;
-    }
+.controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
 
-    button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      background: #007B55;
-      color: white;
-      cursor: pointer;
-      width: auto;
-      max-width: 200px;
-    }
+input {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 250px;
+  max-width: 90%;
+  box-sizing: border-box;
+}
 
-    button:hover {
-      background: #005f3d;
-    }
+button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #007B55;
+  color: white;
+  cursor: pointer;
+}
 
-    #card {
-      position: relative;
-      display: inline-block;
-      margin-top: 20px;
-      width: 100%;
-      max-width: 500px;
-    }
+button:hover {
+  background: #005f3d;
+}
 
-    #card img {
-      width: 100%;
-      height: auto;
-      border-radius: 0px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
+#card {
+  position: relative;
+  display: inline-block;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 500px;
+}
 
-    #nameText {
-      position: absolute;
-      /* 📍 الإحداثيات الجديدة لتناسب الإطار في الصورة */
-      top: 69%; 
-      left: 37.4%; 
-      transform: translate(-50%, -50%);
-      
-      font-size: clamp(14px, 4.5vw, 22px); /* تكبير الخط قليلاً ليتناسب مع البطاقة */
-      font-weight: bold;
-      color: white; /* اللون الأبيض ليناسب التصميم */
-      white-space: nowrap;
-      pointer-events: none; /* لمنع التداخل مع الماوس */
-    }
+#card img {
+  width: 100%;
+  height: auto;
+}
 
-    /* Mobile styles */
-    @media (max-width: 1200px) {
-      h2 {
-        font-size: 1.5rem;
-      }
-      .controls {
-        flex-direction: column; /* stack input & button vertically */
-        gap: 15px;
-      }
-      button {
-        width: 90%;
-      }
-    }
-  </style>
+#nameText {
+  position: absolute;
+  top: 69%;
+  left: 37.4%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(14px, 4.5vw, 22px);
+  font-weight: bold;
+  color: white;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (max-width: 1200px) {
+  .controls {
+    flex-direction: column;
+  }
+  button {
+    width: 90%;
+  }
+}
+</style>
 </head>
+
 <body>
-  <h2>✨ Ramadan Card ✨</h2>
 
-  <!-- Input and button grouped -->
-  <div class="controls">
-    <input type="text" id="nameInput" placeholder="Enter your name">
-    <button onclick="downloadCard()">Download Card</button>
-  </div>
+<h2>✨ Ramadan Card ✨</h2>
 
-  <!-- Card -->
+<div class="controls">
+  <input type="text" id="nameInput" placeholder="Enter your name">
+  <button onclick="downloadCard()">Download Card</button>
+</div>
+
+<div id="card">
+  <!-- مهم جداً https + crossorigin -->
   <img id="cardImage"
-     src="https://multimediaclub.co/wp-content/uploads/2026/02/تهنئة-الموظف-برمضان-العربية-1-scaled.jpg"
-     crossorigin="anonymous"
-     alt="Card Background">
-    <div id="nameText">Your Name</div>
-  </div>
+       src="https://multimediaclub.co/wp-content/uploads/2026/02/تهنئة-الموظف-برمضان-العربية-1-scaled.jpg"
+       crossorigin="anonymous"
+       alt="Card Background">
+  <div id="nameText">Your Name</div>
+</div>
 
-  <script>
-    const nameInput = document.getElementById('nameInput');
-    const nameText = document.getElementById('nameText');
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    nameInput.addEventListener('input', () => {
-      nameText.textContent = nameInput.value || "Your Name";
-    });
+<script>
+const nameInput = document.getElementById('nameInput');
+const nameText = document.getElementById('nameText');
+const cardImage = document.getElementById('cardImage');
 
-    function downloadCard() {
-      const card = document.getElementById('card');
-      html2canvas(card).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'تهنئة-الموظف-برمضان-العربية-1-scaled.jpg';
-        link.href = canvas.toDataURL();
-        link.click();
-      });
-    }
-  </script>
+nameInput.addEventListener('input', () => {
+  nameText.textContent = nameInput.value || "Your Name";
+});
 
-  <!-- html2canvas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-</body>
-</html>
+function downloadCard() {
 
+  // ننتظر تحميل الصورة بالكامل
+  if (!cardImage.complete) {
+    alert("Please wait until the image loads.");
+    return;
+  }
+
+  html2canvas(document.getElementById('card'), {
