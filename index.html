@@ -45,6 +45,8 @@
       font-family: 'Cairo';
       box-sizing: border-box;
       outline: none;
+      background: white;
+      color: #333;
     }
 
     #previewContainer {
@@ -53,6 +55,8 @@
       overflow: hidden;
       margin-bottom: 15px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      background: #000;
+      min-height: 300px;
     }
 
     canvas {
@@ -71,6 +75,7 @@
       border-radius: 12px;
       font-weight: bold;
       transition: 0.3s;
+      cursor: pointer;
     }
 
     .btn-download:hover { opacity: 0.9; }
@@ -79,7 +84,7 @@
 <body>
 
 <div class="container">
-  <h2 style="font-size: 18px; margin-bottom: 15px;">صمم بطاقتك الرمضانية 🌙</h2>
+  <h2 style="font-size: 18px; margin-bottom: 15px;">بطاقة تهنئة رمضان 🌙</h2>
   
   <div id="previewContainer">
     <canvas id="cardCanvas" width="1080" height="1350"></canvas>
@@ -87,25 +92,27 @@
 
   <input type="text" id="nameInput" class="input-box" placeholder="اكتب اسمك هنا..." maxlength="25">
   
-  <a id="downloadLink" class="btn-download" onclick="prepareDownload()">تحميل الصورة</a>
+  <a id="downloadLink" class="btn-download">تحميل الصورة</a>
 </div>
 
 <script>
-  const imageSource = 'https://ibb.co/20RJJPyR'; 
+  // 🔗 هذا هو الرابط المباشر الصحيح الذي ينتهي بـ .jpg
+  const imageSource = 'https://i.ibb.co/XfXG0YVz/Ramadan-Greeting-Arabic.jpg'; 
+  
   const canvas = document.getElementById('cardCanvas');
   const ctx = canvas.getContext('2d');
   const nameInput = document.getElementById('nameInput');
+  const downloadLink = document.getElementById('downloadLink');
   const img = new Image();
 
-  // تحميل الصورة الخام بمجرد دخول الصفحة
   img.crossOrigin = "anonymous";
   img.src = imageSource;
 
+  // عند تحميل الصورة لأول مرة
   img.onload = function() {
-    renderCanvas(""); // رسم الصورة لأول مرة بدون اسم
+    renderCanvas(""); 
   };
 
-  // وظيفة الرسم والتحديث الحي
   function renderCanvas(text) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -114,22 +121,23 @@
       ctx.fillStyle = "#FFFFFF"; 
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.font = "bold 45px 'Cairo'"; 
-      // الإحداثيات المعتمدة لبطاقة العربية
+      ctx.font = "bold 50px 'Cairo'"; 
+      
+      // الإحداثيات داخل الفريم في صورتك
       ctx.fillText(text, 385, 688); 
     }
+    
+    // تحديث رابط التحميل فوراً عند كل تغيير
+    updateDownloadHref();
   }
 
-  // الاستماع للكتابة وتحديث المعاينة في الوقت الفعلي
   nameInput.addEventListener('input', (e) => {
     renderCanvas(e.target.value);
   });
 
-  // تجهيز الصورة للتحميل
-  function prepareDownload() {
-    const downloadLink = document.getElementById('downloadLink');
-    const currentName = nameInput.value.trim() || "Ramadan_Card";
-    downloadLink.href = canvas.toDataURL("image/png", 1.0);
+  function updateDownloadHref() {
+    const currentName = nameInput.value.trim() || "Ramadan_Greeting";
+    downloadLink.href = canvas.toDataURL("image/png");
     downloadLink.download = `Greeting_${currentName}.png`;
   }
 </script>
