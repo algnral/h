@@ -1,146 +1,138 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>تهنئة رمضان - العربية التعاونية</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-
+  <meta charset="UTF-8">
+  <title>National Day Card Generator</title>
   <style>
-    :root {
-      --primary-blue: #003366; 
-      --accent-teal: #22BDB6;
-    }
-
     body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+      padding: 20px;
       margin: 0;
-      font-family: 'Cairo', sans-serif;
-      background: #0a192f;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 15px;
-      color: #fff;
     }
 
-    .container {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 20px;
-      border-radius: 20px;
-      backdrop-filter: blur(15px);
-      max-width: 450px;
-      width: 100%;
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 10px;
     }
 
-    .input-box {
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      border: 2px solid var(--accent-teal);
-      margin-bottom: 15px;
-      text-align: center;
-      font-size: 18px;
-      font-family: 'Cairo';
+    .controls {
+      display: flex;
+      flex-direction: row; /* desktop default */
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 250px;
+      max-width: 90%;
       box-sizing: border-box;
-      outline: none;
-      background: white;
-      color: #333;
     }
 
-    #previewContainer {
-      width: 100%;
-      border-radius: 15px;
-      overflow: hidden;
-      margin-bottom: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      background: #000;
-      min-height: 300px;
-    }
-
-    canvas {
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    .btn-download {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      background: var(--accent-teal);
-      color: #003366;
-      text-decoration: none;
-      border-radius: 12px;
-      font-weight: bold;
-      transition: 0.3s;
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #007B55;
+      color: white;
       cursor: pointer;
+      width: auto;
+      max-width: 200px;
     }
 
-    .btn-download:hover { opacity: 0.9; }
+    button:hover {
+      background: #005f3d;
+    }
+
+    #card {
+      position: relative;
+      display: inline-block;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    #card img {
+      width: 100%;
+      height: auto;
+      border-radius: 0px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    #nameText {
+      position: absolute;
+      top: 89.7%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: clamp(12px, 4vw, 16px); /* smaller font size */
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+      white-space: nowrap;
+    }
+
+    /* Mobile styles */
+    @media (max-width: 1200px) {
+      h2 {
+        font-size: 1.5rem;
+      }
+      .controls {
+        flex-direction: column; /* stack input & button vertically */
+        gap: 15px;
+      }
+      button {
+        width: 90%;
+      }
+    }
   </style>
 </head>
 <body>
+  <h2>✨ Ramadan Card ✨</h2>
 
-<div class="container">
-  <h2 style="font-size: 18px; margin-bottom: 15px;">بطاقة تهنئة رمضان 🌙</h2>
-  
-  <div id="previewContainer">
-    <canvas id="cardCanvas" width="1080" height="1350"></canvas>
+  <!-- Input and button grouped -->
+  <div class="controls">
+    <input type="text" id="nameInput" placeholder="Enter your name">
+    <button onclick="downloadCard()">Download Card</button>
   </div>
 
-  <input type="text" id="nameInput" class="input-box" placeholder="اكتب اسمك هنا..." maxlength="25">
-  
-  <a id="downloadLink" class="btn-download">تحميل الصورة</a>
-</div>
+  <!-- Card -->
+  <div id="card">
+    <img id="cardImage" src="http://multimediaclub.co/wp-content/uploads/2026/02/تهنئة-الموظف-برمضان-العربية-1-scaled.jpg" alt="Card Background">
+    <div id="nameText">Your Name</div>
+  </div>
 
-<script>
-  // 🔗 هذا هو الرابط المباشر الصحيح الذي ينتهي بـ .jpg
-  const imageSource = 'https://i.ibb.co/XfXG0YVz/Ramadan-Greeting-Arabic.jpg'; 
-  
-  const canvas = document.getElementById('cardCanvas');
-  const ctx = canvas.getContext('2d');
-  const nameInput = document.getElementById('nameInput');
-  const downloadLink = document.getElementById('downloadLink');
-  const img = new Image();
+  <script>
+    const nameInput = document.getElementById('nameInput');
+    const nameText = document.getElementById('nameText');
 
-  img.crossOrigin = "anonymous";
-  img.src = imageSource;
+    nameInput.addEventListener('input', () => {
+      nameText.textContent = nameInput.value || "Your Name";
+    });
 
-  // عند تحميل الصورة لأول مرة
-  img.onload = function() {
-    renderCanvas(""); 
-  };
-
-  function renderCanvas(text) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    if (text) {
-      ctx.fillStyle = "#FFFFFF"; 
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = "bold 50px 'Cairo'"; 
-      
-      // الإحداثيات داخل الفريم في صورتك
-      ctx.fillText(text, 385, 688); 
+    function downloadCard() {
+      const card = document.getElementById('card');
+      html2canvas(card).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'NationalDayCard.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
     }
-    
-    // تحديث رابط التحميل فوراً عند كل تغيير
-    updateDownloadHref();
-  }
+  </script>
 
-  nameInput.addEventListener('input', (e) => {
-    renderCanvas(e.target.value);
-  });
-
-  function updateDownloadHref() {
-    const currentName = nameInput.value.trim() || "Ramadan_Greeting";
-    downloadLink.href = canvas.toDataURL("image/png");
-    downloadLink.download = `Greeting_${currentName}.png`;
-  }
-</script>
-
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
