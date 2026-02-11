@@ -2,186 +2,121 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>صانع بطاقات رمضان - EraAI</title>
+  <title>تهنئة رمضان - العربية</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --primary-dark: #0B5C7A;
-      --primary-teal: #22BDB6;
-      --secondary-teal: #6CCED8;
+      --primary-blue: #003366; /* لون هوية الشركة */
+      --accent-teal: #22BDB6;
       --white: #ffffff;
     }
 
     body {
       margin: 0;
       font-family: 'Cairo', sans-serif;
-      background: #f4f7f6; /* خلفية فاتحة ومريحة */
+      background: #0a192f;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      color: #333;
+      color: #fff;
     }
 
-    .card-creator {
-      background: white;
+    .container {
+      background: rgba(255, 255, 255, 0.05);
       padding: 30px;
       border-radius: 20px;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-      max-width: 450px;
+      backdrop-filter: blur(10px);
+      max-width: 400px;
       width: 90%;
       text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .card-creator h1 {
-      color: var(--primary-dark);
-      margin-bottom: 25px;
-      font-size: 24px;
-    }
-
-    .input-group {
-      margin-bottom: 20px;
-    }
+    h1 { font-size: 20px; margin-bottom: 20px; }
 
     input {
       width: 100%;
-      padding: 15px;
-      border: 2px solid #eee;
-      border-radius: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      margin-bottom: 15px;
+      text-align: center;
       font-size: 16px;
-      box-sizing: border-box;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-
-    input:focus {
-      border-color: var(--primary-teal);
+      font-family: 'Cairo';
     }
 
     .btn {
       width: 100%;
-      padding: 15px;
+      padding: 12px;
+      border-radius: 10px;
       border: none;
-      border-radius: 12px;
-      font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s;
-      font-size: 16px;
-      margin-bottom: 10px;
+      font-weight: bold;
+      font-family: 'Cairo';
+      transition: 0.3s;
     }
 
-    .btn-generate {
-      background: var(--primary-dark);
-      color: white;
-    }
-
-    .btn-generate:hover {
-      background: #084a63;
-    }
-
-    .btn-download {
-      background: var(--primary-teal);
-      color: white;
-      display: none;
-      text-decoration: none;
-      display: inline-block;
-    }
+    .btn-generate { background: var(--accent-teal); color: #003366; }
+    .btn-download { background: #fff; color: #003366; margin-top: 15px; display: none; text-decoration: none; }
 
     canvas {
       width: 100%;
-      height: auto;
-      border-radius: 15px;
+      border-radius: 10px;
       margin-top: 20px;
       display: none;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .loader {
-      display: none;
-      margin: 10px 0;
-      color: var(--primary-teal);
-      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-<div class="card-creator">
-  <h1>صمم بطاقة التهنئة الخاصة بك 🌙</h1>
+<div class="container">
+  <h1>أدخل اسمك لإصدار البطاقة</h1>
+  <input type="text" id="nameInput" placeholder="اكتب الاسم هنا" maxlength="30">
+  <button class="btn btn-generate" onclick="processCard()">إنشاء الصورة</button>
   
-  <div class="input-group">
-    <input type="text" id="userName" placeholder="أدخل الاسم الذي سيظهر في الصورة" maxlength="25">
-  </div>
-
-  <button class="btn btn-generate" onclick="drawCard()">إنشاء البطاقة</button>
-  <div id="loader" class="loader">جاري معالجة الصورة...</div>
-
-  <canvas id="mainCanvas" width="1080" height="1080"></canvas>
+  <canvas id="cardCanvas" width="1080" height="1350"></canvas>
   
-  <a id="downloadBtn" class="btn btn-download" style="display: none;" onclick="downloadImage()">تحميل الصورة بجودة عالية</a>
+  <a id="downloadLink" class="btn btn-download">تحميل البطاقة</a>
 </div>
 
 <script>
-  // 🔗 ضع رابط صورتك المباشر هنا (تأكد أن الرابط ينتهي بـ .png أو .jpg)
-  const IMAGE_URL = 'https://i.top4top.io/p_3693miu6q1.jpg'; 
+  // 🔗 استبدل هذا الرابط برابط الصورة المباشر بعد رفعها
+  const imageSource = 'https://c.top4top.io/p_3694gxl6i1.jpg'; 
 
-  function drawCard() {
-    const name = document.getElementById('userName').value.trim();
-    if (!name) {
-      alert("يرجى كتابة الاسم أولاً");
-      return;
-    }
+  function processCard() {
+    const name = document.getElementById('nameInput').value;
+    if (!name) return alert("يرجى إدخال الاسم");
 
-    const canvas = document.getElementById('mainCanvas');
+    const canvas = document.getElementById('cardCanvas');
     const ctx = canvas.getContext('2d');
-    const loader = document.getElementById('loader');
-    const downloadBtn = document.getElementById('downloadBtn');
-
-    loader.style.display = 'block';
-
     const img = new Image();
-    img.crossOrigin = "anonymous"; // هامة جداً للسماح بتحميل الصور من روابط خارجية
-    img.src = IMAGE_URL;
+    
+    img.crossOrigin = "anonymous";
+    img.src = imageSource;
 
     img.onload = function() {
-      // تنظيف الكانفاس
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // رسم الخلفية
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // إعدادات النص
-      ctx.fillStyle = "#FFFFFF"; // لون الخط (يمكنك تغييره حسب تصميمك)
+      // إعدادات النص (الاسم)
+      ctx.fillStyle = "#FFFFFF"; 
       ctx.textAlign = "center";
-      ctx.font = "bold 65px 'co headline'"; // حجم الخط ونوعه
+      ctx.font = "600 45px 'Cairo'"; 
 
-      /**
-       * 📍 تعديل مكان النص:
-       * canvas.width / 2 = في منتصف العرض
-       * 850 = الارتفاع من الأعلى (غير هذا الرقم لرفع أو خفض الاسم)
-       */
-      ctx.fillText(name, canvas.width / 2, 850);
+      /* 📍 ضبط الإحداثيات بناءً على صورة "العربية":
+         - المنتصف الأفقي: canvas.width / 2 (حوالي 540)
+         - الارتفاع الرأسي داخل الإطار: 685 
+      */
+      ctx.fillText(name, 385, 685); 
 
-      // إظهار النتائج
-      loader.style.display = 'none';
       canvas.style.display = 'block';
-      downloadBtn.style.display = 'block';
+      const downloadBtn = document.getElementById('downloadLink');
+      downloadBtn.style.display = 'inline-block';
+      downloadBtn.href = canvas.toDataURL("image/png");
+      downloadBtn.download = `Ramadan_AICC_${name}.png`;
     };
-
-    img.onerror = function() {
-      loader.style.display = 'none';
-      alert("فشل تحميل صورة الخلفية. تأكد من صحة الرابط.");
-    };
-  }
-
-  function downloadImage() {
-    const canvas = document.getElementById('mainCanvas');
-    const link = document.createElement('a');
-    link.download = 'Ramadan-Card.png';
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
   }
 </script>
 
