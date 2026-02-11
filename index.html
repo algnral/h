@@ -16,15 +16,8 @@ body {
   align-items: center;
 }
 
-h2 {
-  font-size: 2rem;
-  margin-bottom: 10px;
-}
-
 .controls {
   display: flex;
-  flex-direction: row;
-  align-items: center;
   gap: 10px;
   margin-bottom: 20px;
   flex-wrap: wrap;
@@ -37,8 +30,6 @@ input {
   border-radius: 8px;
   border: 1px solid #ccc;
   width: 250px;
-  max-width: 90%;
-  box-sizing: border-box;
 }
 
 button {
@@ -51,21 +42,15 @@ button {
   cursor: pointer;
 }
 
-button:hover {
-  background: #005f3d;
-}
-
 #card {
   position: relative;
   display: inline-block;
-  margin-top: 20px;
-  width: 100%;
   max-width: 500px;
+  width: 100%;
 }
 
 #card img {
   width: 100%;
-  height: auto;
 }
 
 #nameText {
@@ -77,16 +62,6 @@ button:hover {
   font-weight: bold;
   color: white;
   white-space: nowrap;
-  pointer-events: none;
-}
-
-@media (max-width: 1200px) {
-  .controls {
-    flex-direction: column;
-  }
-  button {
-    width: 90%;
-  }
 }
 </style>
 </head>
@@ -101,31 +76,50 @@ button:hover {
 </div>
 
 <div id="card">
-  <!-- مهم جداً https + crossorigin -->
-  <img id="cardImage"
-       src="https://multimediaclub.co/wp-content/uploads/2026/02/تهنئة-الموظف-برمضان-العربية-1-scaled.jpg"
-       crossorigin="anonymous"
-       alt="Card Background">
+  <img id="cardImage" alt="Card Background">
   <div id="nameText">Your Name</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-const nameInput = document.getElementById('nameInput');
-const nameText = document.getElementById('nameText');
-const cardImage = document.getElementById('cardImage');
+const imageUrl = "https://multimediaclub.co/wp-content/uploads/2026/02/تهنئة-الموظف-برمضان-العربية-1-scaled.jpg";
+const cardImage = document.getElementById("cardImage");
+const nameInput = document.getElementById("nameInput");
+const nameText = document.getElementById("nameText");
 
-nameInput.addEventListener('input', () => {
+// تحديث الاسم
+nameInput.addEventListener("input", () => {
   nameText.textContent = nameInput.value || "Your Name";
 });
 
+// تحميل الصورة وتحويلها Base64
+fetch(imageUrl)
+  .then(res => res.blob())
+  .then(blob => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      cardImage.src = reader.result;
+    };
+    reader.readAsDataURL(blob);
+  })
+  .catch(err => {
+    console.error("Image load error:", err);
+    alert("Image failed to load. Server may block CORS.");
+  });
+
+// تحميل الكرت
 function downloadCard() {
+  html2canvas(document.getElementById("card"), {
+    scale: 2
+  }).then(canvas => {
+    const link = document.createElement("a");
+    link.download = "ramadan-card.jpg";
+    link.href = canvas.toDataURL("image/jpeg", 1);
+    link.click();
+  });
+}
+</script>
 
-  // ننتظر تحميل الصورة بالكامل
-  if (!cardImage.complete) {
-    alert("Please wait until the image loads.");
-    return;
-  }
-
-  html2canvas(document.getElementById('card'), {
+</body>
+</html>
