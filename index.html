@@ -9,20 +9,21 @@
 /* ====== Co Headline Font ====== */
 @font-face {
   font-family: 'CoHeadline';
-  src: url('assets/fonts/CoHeadline-Regular.woff2') format('otf');
+  src: url('assets/fonts/CoHeadline-Regular.woff2') format('opentype');
   font-weight: 400;
 }
 
 @font-face {
   font-family: 'CoHeadline';
-  src: url('assets/fonts/CoHeadline-Bold.woff2') format('otf');
-  font-weight: 700;
+  src: url('assets/fonts/CoHeadline-Bold.woff2') format('opentype');
+  font-weight: 400;
 }
+
 
 /* ====== Page Theme ====== */
 
 body {
-  font-family: 'CoHeadline', Arial, sans-serif;
+  font-family: 'CoHeadline', sans-serif;
   text-align: center;
   margin: 0;
   min-height: 100vh;
@@ -67,7 +68,7 @@ input {
   border: none;
   outline: none;
   width: 260px;
-  font-family: 'CoHeadline', CoHeadline, sans-serif;
+  font-family: 'CoHeadline', sans-serif;
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
@@ -80,7 +81,7 @@ button {
   color: white;
   cursor: pointer;
   font-weight: 700;
-  font-family: 'CoHeadline', CoHeadline, sans-serif;
+  font-family: 'CoHeadline', sans-serif;
   transition: all 0.25s ease;
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
@@ -114,7 +115,7 @@ button:hover {
   font-size: clamp(16px, 4.5vw, 26px);
   font-weight: 700;
   color: white;
-  font-family: 'CoHeadline', CoHeadline, sans-serif;
+  font-family: 'CoHeadline', sans-serif;
   white-space: nowrap;
   pointer-events: none;
   text-shadow: 0 3px 10px rgba(0,0,0,0.6);
@@ -136,7 +137,7 @@ button:hover {
 <body>
 
 <div class="container">
-  <h2>تهنئة رمضان</h2>
+  <h2>تهنئة رمضان 🌙</h2>
 
   <div class="controls">
     <input type="text" id="nameInput" placeholder="Enter your name">
@@ -145,7 +146,7 @@ button:hover {
 
   <div id="card">
     <img id="cardImage" src="ramadan.jpg">
-    <div id="nameText">Your Name</div>
+    <div id="nameText">الاسم</div>
   </div>
 </div>
 
