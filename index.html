@@ -124,14 +124,20 @@
     });
 
     function downloadCard() {
-      const card = document.getElementById('card');
-      html2canvas(card).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'تهنئة-الموظف-برمضان-العربية-1-scaled.jpg';
-        link.href = canvas.toDataURL();
-        link.click();
-      });
-    }
+  const card = document.getElementById('card');
+
+  html2canvas(card, {
+    scale: 4,              // 👈 أهم سطر لرفع الجودة
+    useCORS: true,
+    backgroundColor: null
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'ramadan-card.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 1.0); // جودة 100%
+    link.click();
+  });
+}
+
   </script>
 
   <!-- html2canvas -->
