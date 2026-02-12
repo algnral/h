@@ -1,146 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>National Day Card Generator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f4f4f4;
-      padding: 20px;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+<meta charset="UTF-8">
+<title>Ramadan Card Generator</title>
 
-    h2 {
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
+<style>
 
-    .controls {
-      display: flex;
-      flex-direction: row; /* desktop default */
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+/* ====== Co Headline Font ====== */
+@font-face {
+  font-family: 'CoHeadline';
+  src: url('assets/fonts/CoHeadline-Regular.woff2') format('woff2');
+  font-weight: 400;
+}
 
-    input {
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      width: 250px;
-      max-width: 90%;
-      box-sizing: border-box;
-    }
+@font-face {
+  font-family: 'CoHeadline';
+  src: url('assets/fonts/CoHeadline-Bold.woff2') format('woff2');
+  font-weight: 700;
+}
 
-    button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      background: #007B55;
-      color: white;
-      cursor: pointer;
-      width: auto;
-      max-width: 200px;
-    }
+/* ====== Page Theme ====== */
 
-    button:hover {
-      background: #005f3d;
-    }
+body {
+  font-family: 'CoHeadline', Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
 
-    #card {
-      position: relative;
-      display: inline-block;
-      margin-top: 20px;
-      width: 100%;
-      max-width: 500px;
-    }
+.container {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  width: 90%;
+  max-width: 700px;
+}
 
-    #card img {
-      width: 100%;
-      height: auto;
-      border-radius: 0px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
+h2 {
+  font-size: 2.2rem;
+  color: white;
+  margin-bottom: 25px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
 
-    #nameText {
-      position: absolute;
-      /* 📍 الإحداثيات الجديدة لتناسب الإطار في الصورة */
-      top: 69%; 
-      left: 37.4%; 
-      transform: translate(-50%, -50%);
-      
-      font-size: clamp(14px, 4.5vw, 22px); /* تكبير الخط قليلاً ليتناسب مع البطاقة */
-      font-weight: bold;
-      color: white; /* اللون الأبيض ليناسب التصميم */
-      white-space: nowrap;
-      pointer-events: none; /* لمنع التداخل مع الماوس */
-    }
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
 
-    /* Mobile styles */
-    @media (max-width: 1200px) {
-      h2 {
-        font-size: 1.5rem;
-      }
-      .controls {
-        flex-direction: column; /* stack input & button vertically */
-        gap: 15px;
-      }
-      button {
-        width: 90%;
-      }
-    }
-  </style>
+input {
+  padding: 12px 16px;
+  font-size: 1rem;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  width: 260px;
+  font-family: 'CoHeadline', Arial, sans-serif;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+button {
+  padding: 12px 24px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(45deg, #00c853, #00e676);
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: 'CoHeadline', Arial, sans-serif;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(0,0,0,0.4);
+}
+
+/* ====== Card ====== */
+
+#card {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 500px;
+}
+
+#card img {
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+}
+
+#nameText {
+  position: absolute;
+  top: 69%;
+  left: 37.4%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(16px, 4.5vw, 26px);
+  font-weight: 700;
+  color: white;
+  font-family: 'CoHeadline', Arial, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+  }
+  input, button {
+    width: 100%;
+  }
+}
+
+</style>
 </head>
+
 <body>
+
+<div class="container">
   <h2>✨ Ramadan Card ✨</h2>
 
-  <!-- Input and button grouped -->
   <div class="controls">
     <input type="text" id="nameInput" placeholder="Enter your name">
     <button onclick="downloadCard()">Download Card</button>
   </div>
 
-  <!-- Card -->
   <div id="card">
     <img id="cardImage" src="ramadan.jpg">
     <div id="nameText">Your Name</div>
   </div>
+</div>
 
-  <script>
-    const nameInput = document.getElementById('nameInput');
-    const nameText = document.getElementById('nameText');
+<script>
+const nameInput = document.getElementById('nameInput');
+const nameText = document.getElementById('nameText');
 
-    nameInput.addEventListener('input', () => {
-      nameText.textContent = nameInput.value || "Your Name";
-    });
+nameInput.addEventListener('input', () => {
+  nameText.textContent = nameInput.value || "Your Name";
+});
 
-    function downloadCard() {
+function downloadCard() {
   const card = document.getElementById('card');
 
   html2canvas(card, {
-    scale: 4,              // 👈 أهم سطر لرفع الجودة
+    scale: 4,
     useCORS: true,
     backgroundColor: null
   }).then(canvas => {
     const link = document.createElement('a');
     link.download = 'ramadan-card.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 1.0); // جودة 100%
+    link.href = canvas.toDataURL('image/jpeg', 1.0);
     link.click();
   });
 }
+</script>
 
-  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-  <!-- html2canvas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
